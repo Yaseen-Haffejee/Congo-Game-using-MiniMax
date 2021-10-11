@@ -74,6 +74,7 @@ void Print(vector<State *>&states){
                 }
                 cout<<endl;
             }
+           
         }
         cout<<"\n";
     }
