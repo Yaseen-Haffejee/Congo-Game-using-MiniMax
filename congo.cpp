@@ -51,9 +51,15 @@ void Print(vector<State *>&states){
             else{
                 // get all the positions which corresponds to a certain piece
                 auto it =  s->board.equal_range(values[i]);
+
+                vector<string> answers;
+                // if the piece is not on the board
+                if(it.first == it.second){
+                    cout<<outputs[i]<<endl;
+                    continue;
+                }
                 // print the name of the piece
                 cout<<outputs[i];
-                vector<string> answers;
                 for(auto iter = it.first;iter!=it.second;iter++){
                     //loop through the it and add them to answers
                     answers.push_back(iter->second);
@@ -72,7 +78,7 @@ void Print(vector<State *>&states){
                     }
                    
                 }
-                cout<<endl;
+                cout<<"\n";
             }
            
         }
