@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <string> 
 #include <unordered_map>
-
 using namespace std;
 
 struct State{
@@ -30,6 +29,7 @@ struct State{
 //jus declaring the method for now. Completed after main function
 void PrintPositions(vector<State *>&states);
 void PrintMoves(vector<string>&moves, string& StartPos);
+void PrintMoves(vector<string>&moves,string& StartPos, bool& moreThanOne);
 
 void StringToState(string state,vector<State*>&states){
     // unordered multimap so searching is faster and we can have duplicate keys
@@ -886,6 +886,196 @@ vector<string> ZebraMoves(State * state) {
     }
     return possibleMoves;
 }
+
+// Get the elephant moves using this method
+// Since there can be more than on elephant, we need to find them all then call this method with their positions
+// Elephants can move one or two squares vertically or horizontally
+// If it moves two blocks and in the first block is an opponent piece, that piece is unaffected
+vector<string> ElephantMoves(string currentPosition, State * state, bool& multipleElephants){
+    vector<string> possibleMoves;
+    vector<string>possibilities;
+    //find the elephant and get it's current rank and column
+    string column(1,currentPosition.at(0));
+    string rank(1,currentPosition.at(1));
+    int Currentrank = stoi(rank);
+
+    if(column =="a" || column == "b" || column=="c" || column=="d" || column=="e"){
+        if(Currentrank ==7){
+            // Right
+            string move1 = static_cast<char>(column[0]+1)+ rank;
+            // right right
+            string move2 = static_cast<char>(column[0]+2)+ rank;
+            // down
+            string move3 = column+to_string(Currentrank-1);
+            // down down
+            string move4 = column+to_string(Currentrank-2);
+            possibilities = {move1,move2,move3,move4};
+        }
+        else if(Currentrank ==2 || Currentrank == 6){
+            // Right
+            string move1 = static_cast<char>(column[0]+1)+rank;
+            // right Right
+            string move2 = static_cast<char>(column[0]+2)+rank;
+            string move5;
+            // up
+            string move3 = column + to_string(Currentrank +1);
+            // down
+            string move4 = column + to_string(Currentrank -1 );
+            if(Currentrank == 6){
+                // down down
+                move5 = column + to_string(Currentrank - 2);
+            }
+            else{
+                // up up
+                move5 = column + to_string(Currentrank + 2);
+            }
+            possibilities = {move1,move2,move3,move4,move5};
+        }
+        else if(Currentrank == 5 || Currentrank==4 || Currentrank==3){
+            // Right
+            string move1 = static_cast<char>(column[0]+1)+rank;
+            // right Right
+            string move2 = static_cast<char>(column[0]+2)+rank;
+            // up
+            string move3 = column + to_string(Currentrank +1);
+            // down
+            string move4 = column + to_string(Currentrank -1 );
+            // down down
+            string move5 = column + to_string(Currentrank - 2);
+            // up up
+            string move6 =  column + to_string(Currentrank + 2);
+            possibilities = {move1,move2,move3,move4,move5,move6};
+        }
+        else{
+             // Right
+            string move1 = static_cast<char>(column[0]+1)+rank;
+            // right Right
+            string move2 = static_cast<char>(column[0]+2)+rank;
+            // up
+            string move3 = column + to_string(Currentrank +1);
+            // up up
+            string move4 =  column + to_string(Currentrank + 2);
+            possibilities = {move1,move2,move3,move4};
+        }
+        if(column == "b"){
+            // left is the only additional move it can make
+            string leftMove = static_cast<char>(column[0]-1)+rank;
+            possibilities.push_back(leftMove);
+        }
+        else if(column == "c" || column == "d" || column == "e"){
+            // left and left left are the only additional moves that can be made
+            string leftMove = static_cast<char>(column[0]-1)+rank;
+            string leftleftMove = static_cast<char>(column[0]-2)+rank;
+            possibilities.push_back(leftMove);
+            possibilities.push_back(leftleftMove);
+        }
+
+    }
+    else if(column == "f" || column == "g"){
+         if(Currentrank ==7){
+            // left 
+            string move1 = static_cast<char>(column[0]-1)+ rank;
+            // left left
+            string move2 = static_cast<char>(column[0]-2)+ rank;
+            // down
+            string move3 = column+to_string(Currentrank-1);
+            // down down
+            string move4 = column+to_string(Currentrank-2);
+            possibilities = {move1,move2,move3,move4};
+        }
+        else if(Currentrank ==2 || Currentrank == 6){
+            // left
+            string move1 = static_cast<char>(column[0]-1)+rank;
+            // left left
+            string move2 = static_cast<char>(column[0]-2)+rank;
+            string move5;
+            // up
+            string move3 = column + to_string(Currentrank +1);
+            // down
+            string move4 = column + to_string(Currentrank -1 );
+            if(Currentrank == 6){
+                // down down
+                move5 = column + to_string(Currentrank - 2);
+            }
+            else{
+                // up up
+                move5 = column + to_string(Currentrank + 2);
+            }
+            possibilities = {move1,move2,move3,move4,move5};
+        }
+        else if(Currentrank == 5 || Currentrank==4 || Currentrank==3){
+            // left
+            string move1 = static_cast<char>(column[0]-1)+rank;
+            // left left
+            string move2 = static_cast<char>(column[0]-2)+rank;
+            // up
+            string move3 = column + to_string(Currentrank +1);
+            // down
+            string move4 = column + to_string(Currentrank -1 );
+            // down down
+            string move5 = column + to_string(Currentrank - 2);
+            // up up
+            string move6 =  column + to_string(Currentrank + 2);
+            possibilities = {move1,move2,move3,move4,move5,move6};
+        }
+        else{
+             // left
+            string move1 = static_cast<char>(column[0]-1)+rank;
+            // left left
+            string move2 = static_cast<char>(column[0]-2)+rank;
+            // up
+            string move3 = column + to_string(Currentrank +1);
+            // up up
+            string move4 =  column + to_string(Currentrank + 2);
+            possibilities = {move1,move2,move3,move4};
+        }
+        if(column == "f"){
+            // only additional move is right
+            string rightMove = static_cast<char>(column[0]+1)+rank;
+            possibilities.push_back(rightMove);
+        }
+    }
+    ValidMoves(possibilities,possibleMoves,state);
+    PrintMoves(possibleMoves,currentPosition,multipleElephants);
+    return possibleMoves;
+}
+void ElephantMoves(State * s){
+    unordered_multimap<string,string> :: iterator iter1,iter2;
+    vector<string>initialPositions;
+    bool multipleElephants = false;
+    // check which players turn it is and find the relevant elephant
+    if(s->whitesTurn){
+        auto it = s->boardByPiece.equal_range("E");
+        iter1 = it.first;
+        iter2 = it.second;
+    }
+    else{
+        auto it = s->boardByPiece.equal_range("e");
+        iter1 = it.first;
+        iter2 = it.second;
+    }
+    // No elephants 
+    if(iter1 == iter2){
+        return;
+    }
+    // add the positions to the vector
+    for(auto it = iter1; it!= iter2;it++){
+       initialPositions.push_back(it->second);
+    }
+    int length = initialPositions.size();
+    // if there's more than one element, then we have multiple 2 elephants of the same colour
+    if(length>1){
+        multipleElephants = true;
+    }
+    // sort the vector so we have alphabetical order
+    sort(initialPositions.begin(),initialPositions.end());
+    for(int i=0;i<length;i++){
+        if(i == length-1){
+            multipleElephants = false;
+        }
+        ElephantMoves(initialPositions[i],s,multipleElephants);
+    }
+}
 int main(){
     vector<string> inputs;
     vector<State *>states;
@@ -901,10 +1091,33 @@ int main(){
     
     // PrintPositions(states);
     for(State * state : states){
-        ZebraMoves(state);
+        ElephantMoves(state);
     }
     
   
+}
+void PrintMoves(vector<string>&moves,string& StartPos, bool& moreThanOne){
+    int length = moves.size();
+    if(length == 0){
+        return;
+    }
+    sort(moves.begin(),moves.end());
+    for(int i = 0; i < length;i++){
+        if(i==length-1){
+            cout<<StartPos<<moves[i];
+        }
+        else{
+            cout<<StartPos<<moves[i]<<" ";
+        }
+       
+    }
+    if(!moreThanOne){
+        cout<<"\n";
+    }
+    else{
+        cout<<" ";
+    }
+        
 }
 
 void PrintMoves(vector<string>&moves, string& StartPos){
@@ -928,7 +1141,7 @@ void PrintMoves(vector<string>&moves, string& StartPos){
 void PrintPositions(vector<State *>&states){
     
     vector<string>outputs = {"white pawn: ","black pawn: ","white superpawn: ","black superpawn: ","white giraffe: ","black giraffe: ","white monkey: ","black monkey: ","white elephant: ","black elephant: ","white lion: ","black lion: ","white crocodile: ","black crocodile: ","white zebra: ","black zebra: ","side to play: "};
-    // vector<string>outputs = {"white pawn:","black pawn:","white superpawn:","black superpawn:","white giraffe:","black giraffe:","white monkey:","black monkey:","white elephant:","black elephant:","white lion:","black lion:","white crocodile:","black crocodile:","white zebra:","black zebra:","side to play:"};
+    vector<string>outputs2 = {"white pawn:","black pawn:","white superpawn:","black superpawn:","white giraffe:","black giraffe:","white monkey:","black monkey:","white elephant:","black elephant:","white lion:","black lion:","white crocodile:","black crocodile:","white zebra:","black zebra:","side to play:"};
     vector<string>values = {"P","p","S","s","G","g","M","m","E","e","L","l","C","c","Z","z"};
     int length = outputs.size();
     // Loop through every state first
@@ -958,7 +1171,7 @@ void PrintPositions(vector<State *>&states){
                 vector<string> answers;
                 // if the piece is not on the board
                 if(it.first == it.second){
-                    cout<<outputs[i]<<endl;
+                    cout<<outputs2[i]<<endl;
                     continue;
                 }
                 // print the name of the piece
