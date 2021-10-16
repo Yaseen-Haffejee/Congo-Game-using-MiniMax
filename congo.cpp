@@ -139,9 +139,12 @@ void ValidMoves(vector<string>&possible,vector<string>&moves,State * s){
     
     if(s->whitesTurn){
         for(int i=0;i<size;i++){
+            // find the what piece is at the position
             auto it = s->boardByPosition.find(possible[i]);
+            // check if in that position is a black piece that can be captured
             auto hasBlack = s->blackPieces.find(possible[i]);
             if(it->second == "Empty" || hasBlack!=s->blackPieces.end()){
+                // add to valid moves
                 moves.push_back(it->first);
             }
         }
@@ -149,6 +152,7 @@ void ValidMoves(vector<string>&possible,vector<string>&moves,State * s){
     else{
         for(int i=0;i<size;i++){
             auto it = s->boardByPosition.find(possible[i]);
+            // check if white piece is there to be captured
             auto hasWhite = s->whitePieces.find(possible[i]);
             if(it->second == "Empty" || hasWhite!=s->whitePieces.end()){
                 moves.push_back(it->first);
@@ -159,7 +163,58 @@ void ValidMoves(vector<string>&possible,vector<string>&moves,State * s){
 
 }
 
+void ValidPawnMoves(vector<string>&possible,vector<string>&moves, State * s, int& Currentrank){
+    // loop through all the possibilities and only add it to Moves if the block is empty or it has a black or white piece there
+    int size = possible.size();
+    
+    if(s->whitesTurn){
+        for(int i=0;i<size;i++){
+            // find the corresponding position on the board
+            auto it = s->boardByPosition.find(possible[i]);
+            // see if position is occupied by a black piece
+            auto hasBlack = s->blackPieces.find(possible[i]);
+            // store the rank of the move to be checked in variable rank
+            int rank = stoi(string(1,it->first.at(1)));
+            // if Currentrank is bigger than rank, then the white piece is moving down
+            // if we are moving down, then we can't capture black pieces
+            if(Currentrank > rank){
+                // if block is empty or does not have black piece then this backward move is valid
+                if(it->second == "Empty" ){
+                    moves.push_back(it->first);
+                }
+            }
+            else{
+                // if block is empty or does have black piece then forward move is valid
+                if(it->second == "Empty" || hasBlack!=s->blackPieces.end()){
+                    moves.push_back(it->first);
+                }
+            }
+            
+        }
+    }
+    else{
+        for(int i=0;i<size;i++){
+            auto it = s->boardByPosition.find(possible[i]);
+            auto hasWhite = s->whitePieces.find(possible[i]);
+            int rank = stoi(string(1,it->first.at(1)));
+             // if Currentrank is smaller than rank, then the black piece is moving up
+            // if we are moving up, then we can't capture white pieces
+            if(Currentrank < rank){
+                // if block is empty or does not have white piece then this backward move is valid
+                if(it->second == "Empty"){
+                    moves.push_back(it->first);
+                }
+            }
+            else{
+                // if block is empty or does have white piece then forward move is valid
+                if(it->second == "Empty" || hasWhite!=s->whitePieces.end()){
+                    moves.push_back(it->first);
+                }
+            }
+        }
 
+    }
+}
 // Get the Lions Moves using this method
 // Lions can only move left or right within 3 blocks namely ,C,D and E and within rank 1-3 if it's white or rank 7-4 if it's black
 // They can only move from rank 3 to rank 5, i.e accross the river if by moving accross they can capture the opposing Lion.
@@ -1076,6 +1131,238 @@ void ElephantMoves(State * s){
         ElephantMoves(initialPositions[i],s,multipleElephants);
     }
 }
+
+// Get the Pawn moves using this method
+// Since there can be more than one Pawn, we need to first find them then call this method for each of them
+// Pawns can move forward one block up or diagonally
+// White pawns can move back one or two steps back after passing the river. i.e rank 4
+// Black pawns can move back one r two steps back after passing the river. i.e rank 4 and they are in rank 3
+// When moving backwards you cannot capture an opposing piece
+vector<string> PawnMoves(string currentPosition, State * state, bool& multiplePawns){
+    vector<string>possibilities;
+    vector<string>possibleMoves;
+    // get the column and rank of the current piece
+    string column(1,currentPosition.at(0));
+    string rank(1,currentPosition.at(1));
+    // convert rank to an int since we'll be using it to get moves etc
+    int Currentrank = stoi(rank);
+
+    // white pawns move
+    if(state->whitesTurn){
+        if(column != "g"){
+            // there is no left diagonal if we are in column a
+
+            // The pawn can only move back one it is past rank 4 
+            // So the only possible moves are up and diagonal right
+            if(Currentrank <=4){
+                // up
+                string move1 = column + to_string(Currentrank +1);
+                // diagonal right up
+                string move2 = static_cast<char>(column[0]+1)+ to_string(Currentrank+1);
+                possibilities = {move1,move2};
+            }
+            // if it is in 5 or 6, it can still move up and diagonal right, but also down one or two block
+            else if(Currentrank == 5 || Currentrank == 6){
+                // up
+                string move1 = column + to_string(Currentrank +1);
+                // diagonal right up
+                string move2 = static_cast<char>(column[0]+1)+ to_string(Currentrank+1);
+                // down 
+                string move3 = column + to_string(Currentrank -1 );
+                // down down 
+                string move4 = column + to_string(Currentrank - 2);
+
+                // back move is only valid if there are no pieces in the first back block
+                if(state->boardByPosition.find(move3)->second == "Empty"){
+                    possibilities = {move1,move2,move3,move4};
+                }
+                else{
+                    possibilities = {move1,move2};
+                }
+                
+            }
+            //rank is 7, then we can only move down
+            else{
+                // down 
+                string move1 = column + to_string(Currentrank -1 );
+                // down down 
+                string move2 = column + to_string(Currentrank - 2);
+                if(state->boardByPosition.find(move1)->second == "Empty"){
+                    possibilities = {move1,move2};
+                }
+            }
+
+            if(column != "a" && Currentrank != 7){
+                // the only additional move is a diagonal left 
+                string leftDiag = static_cast<char>(column[0]-1)+to_string(Currentrank +1);
+                possibilities.push_back(leftDiag);
+            }
+        }
+        // column is g
+        else{
+            if(Currentrank <=4){
+                // up
+                string move1 = column + to_string(Currentrank +1);
+                // diagonal left up
+                string move2 = static_cast<char>(column[0]-1)+ to_string(Currentrank+1);
+                possibilities = {move1,move2};
+            }
+            // if it is in 5 or 6, it can still move up and diagonal left, but also down one or two block
+            else if(Currentrank == 5 || Currentrank == 6){
+                // up
+                string move1 = column + to_string(Currentrank +1);
+                // diagonal left up
+                string move2 = static_cast<char>(column[0]-1)+ to_string(Currentrank+1);
+                // down 
+                string move3 = column + to_string(Currentrank -1 );
+                // down down 
+                string move4 = column + to_string(Currentrank - 2);
+                if(state->boardByPosition.find(move3)->second == "Empty"){
+                    possibilities = {move1,move2,move3,move4};
+                }
+                else{
+                    possibilities = {move1,move2};
+                }
+            }
+            //rank is 7, then we can only move down
+            else{
+                // down 
+                string move1 = column + to_string(Currentrank -1 );
+                // down down 
+                string move2 = column + to_string(Currentrank - 2);
+                if(state->boardByPosition.find(move1)->second == "Empty"){
+                    possibilities = {move1,move2};
+                }
+            }
+        }
+    }
+    // black pawns moves
+    else{
+
+        if(column != "g"){
+            // The pawn can only move back one it is past rank 4 
+            // So the only possible moves are down and diagonal right down
+            if(Currentrank >=4){
+                // down
+                string move1 = column + to_string(Currentrank -1);
+                // diagonal right down
+                string move2 = static_cast<char>(column[0]+1)+ to_string(Currentrank-1);
+                possibilities = {move1,move2};
+            }
+            // if it is in 2 or 3, it can still move down and diagonal right down, but also up one or two block
+            else if(Currentrank == 2 || Currentrank == 3){
+                // up
+                string move1 = column + to_string(Currentrank +1);
+                // diagonal right down
+                string move2 = static_cast<char>(column[0]+1)+ to_string(Currentrank-1);
+                // down 
+                string move3 = column + to_string(Currentrank -1 );
+                // up up 
+                string move4 = column + to_string(Currentrank + 2);
+                if(state->boardByPosition.find(move1)->second == "Empty"){
+                    possibilities = {move1,move2,move3,move4};
+                }
+                else{
+                    possibilities = {move2,move3};
+                }
+                
+            }
+            //rank is 1, then we can only move up
+            else{
+                // up 
+                string move1 = column + to_string(Currentrank + 1 );
+                // up up 
+                string move2 = column + to_string(Currentrank + 2);
+                if(state->boardByPosition.find(move1)->second == "Empty"){
+                    possibilities = {move1,move2};
+                }
+            }
+            if(column != "a" && Currentrank != 1){
+                // the only additional move is a diagonal left 
+                string leftDiag = static_cast<char>(column[0]-1)+to_string(Currentrank -1);
+                possibilities.push_back(leftDiag);
+            }
+        }
+        // column is g
+        else{
+            if(Currentrank >=4){
+                // down
+                string move1 = column + to_string(Currentrank -1);
+                // diagonal left up
+                string move2 = static_cast<char>(column[0]-1)+ to_string(Currentrank-1);
+                possibilities = {move1,move2};
+            }
+            // if it is in 2 or 3, it can still move up and diagonal left, but also down one or two block
+            else if(Currentrank == 2 || Currentrank == 3){
+                // up
+                string move1 = column + to_string(Currentrank +1);
+                // diagonal left down
+                string move2 = static_cast<char>(column[0]-1)+ to_string(Currentrank-1);
+                // down 
+                string move3 = column + to_string(Currentrank -1 );
+                // up up 
+                string move4 = column + to_string(Currentrank + 2);
+                if(state->boardByPosition.find(move1)->second == "Empty"){
+                    possibilities = {move1,move2,move3,move4};
+                }
+                else{
+                    possibilities = {move2,move3};
+                }
+
+            }
+            //rank is 7, then we can only move up
+            else{
+                // up 
+                string move1 = column + to_string(Currentrank +1 );
+                // up up 
+                string move2 = column + to_string(Currentrank + 2);
+                if(state->boardByPosition.find(move1)->second == "Empty"){
+                    possibilities = {move1,move2};
+                }
+            }
+        }
+    }
+    ValidPawnMoves(possibilities,possibleMoves,state,Currentrank);
+    PrintMoves(possibleMoves,currentPosition,multiplePawns);
+    return possibleMoves;
+}
+void PawnMoves(State * s){
+    unordered_multimap<string,string> :: iterator iter1,iter2;
+    vector<string>initialPositions;
+    bool multiplePawns = false;
+    // check which players turn it is and find the relevant pawns
+    if(s->whitesTurn){
+        auto it = s->boardByPiece.equal_range("P");
+        iter1 = it.first;
+        iter2 = it.second;
+    }
+    else{
+        auto it = s->boardByPiece.equal_range("p");
+        iter1 = it.first;
+        iter2 = it.second;
+    }
+    // No pawns 
+    if(iter1 == iter2){
+        return;
+    }
+    // add the positions to the vector
+    for(auto it = iter1; it!= iter2;it++){
+       initialPositions.push_back(it->second);
+    }
+    int length = initialPositions.size();
+    // if there's more than one element, then we have multiple 2 elephants of the same colour
+    if(length>1){
+        multiplePawns = true;
+    }
+    // sort the vector so we have alphabetical order
+    sort(initialPositions.begin(),initialPositions.end());
+    for(int i=0;i<length;i++){
+        if(i == length-1){
+            multiplePawns = false;
+        }
+        PawnMoves(initialPositions[i],s,multiplePawns);
+    }
+}
 int main(){
     vector<string> inputs;
     vector<State *>states;
@@ -1091,7 +1378,7 @@ int main(){
     
     // PrintPositions(states);
     for(State * state : states){
-        ElephantMoves(state);
+        PawnMoves(state);
     }
     
   
