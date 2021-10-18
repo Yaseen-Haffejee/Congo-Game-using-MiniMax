@@ -2,10 +2,12 @@
 #include <vector>
 #include <sstream>
 #include <algorithm>
-#include <string> 
+#include <string>
 #include <unordered_map>
 using namespace std;
 
+
+typedef unordered_multimap<string,string> :: iterator iter;
 struct State{
     // State of the game is stored in an unordered_map.
     // We can find the position of any piece by using the .find() method
@@ -106,7 +108,7 @@ void StringToState(string state,vector<State*>&states){
         else{
             // check if the next work is w or b and set whitePlay accordingly
             if(temp == "w"){
-            
+
                 whitePlay = true;
             }
             else if(temp == "b"){
@@ -121,8 +123,8 @@ void StringToState(string state,vector<State*>&states){
     // create a new state and add it to the states vector
     State * newState = new State(StatesByPiece,StatesByPosition,wPieces,bPieces,whitePlay);
     states.push_back(newState);
-    
-   
+
+
 }
 
 void setStates(vector<string>&inputs,vector<State*>&states){
@@ -136,7 +138,7 @@ void setStates(vector<string>&inputs,vector<State*>&states){
 void ValidMoves(vector<string>&possible,vector<string>&moves,State * s){
     // loop through all the possibilities and only add it to Moves if the block is empty or it has a black or white piece there
     int size = possible.size();
-    
+
     if(s->whitesTurn){
         for(int i=0;i<size;i++){
             // find the what piece is at the position
@@ -166,7 +168,7 @@ void ValidMoves(vector<string>&possible,vector<string>&moves,State * s){
 void ValidPawnMoves(vector<string>&possible,vector<string>&moves, State * s, int& Currentrank){
     // loop through all the possibilities and only add it to Moves if the block is empty or it has a black or white piece there
     int size = possible.size();
-    
+
     if(s->whitesTurn){
         for(int i=0;i<size;i++){
             // find the corresponding position on the board
@@ -189,7 +191,7 @@ void ValidPawnMoves(vector<string>&possible,vector<string>&moves, State * s, int
                     moves.push_back(it->first);
                 }
             }
-            
+
         }
     }
     else{
@@ -258,8 +260,8 @@ vector<string> LionMoves(State * state){
         }
         // if it is in d then it can move left,right,possibly up,possibly down and diagonally.
         if(column == "d"){
-           
-            // convert rank to int because depending in the rank, certain additional moves will be available 
+
+            // convert rank to int because depending in the rank, certain additional moves will be available
             int Currentrank = stoi(rank);
             string left = "c"+rank;
             string right = "e"+rank;
@@ -270,7 +272,7 @@ vector<string> LionMoves(State * state){
             string DiagonalLeftDown = "";
             string DiagonalRightDown = "";
             if(Currentrank ==1 || Currentrank ==2){
-    
+
                 string nextRank = to_string(Currentrank+1);
                 // set the diagaonal positions by increasing rank and shifting left and right
                 DiagonalLeftUp = "c"+nextRank;
@@ -308,10 +310,10 @@ vector<string> LionMoves(State * state){
                 // loop through all the possibilities and only add it to possibleMoves if the block is empty or it has a black piece there
                 ValidMoves(possibilities,possibleMoves,state);
             }
-           
+
         }
         else if( column == "c"){
-             // convert rank to int because depending in the rank, certain additional moves will be available 
+             // convert rank to int because depending in the rank, certain additional moves will be available
             int Currentrank = stoi(rank);
             string right = "d"+rank;
             string up = "";
@@ -338,7 +340,7 @@ vector<string> LionMoves(State * state){
                 }
                 // loop through all the possibilities and only add it to possibleMoves if the block is empty or it has a black piece there
                 ValidMoves(possibilities,possibleMoves,state);
-                
+
             }
             else{
                 // if the rank is 3
@@ -353,10 +355,10 @@ vector<string> LionMoves(State * state){
                 if(b!=state->blackPieces.end()){
                     if(b->second == "l"){
                         possibleMoves.push_back(overRiver[0]);
-                        
+
                     }
                 }
-                
+
                 if(straightPath){
                     possibilities.push_back(blackLionPos->second);
                 }
@@ -367,7 +369,7 @@ vector<string> LionMoves(State * state){
         }
         //column is e
         else{
-            // convert rank to int because depending in the rank, certain additional moves will be available 
+            // convert rank to int because depending in the rank, certain additional moves will be available
             int Currentrank = stoi(rank);
             string left = "d"+rank;
             string up = "";
@@ -394,7 +396,7 @@ vector<string> LionMoves(State * state){
                 }
                 // loop through all the possibilities and only add it to possibleMoves if the block is empty or it has a black piece there
                 ValidMoves(possibilities,possibleMoves,state);
-                
+
             }
             else{
                 // if the rank is 3
@@ -405,22 +407,22 @@ vector<string> LionMoves(State * state){
                 DiagonalLeftDown = "d"+newRank;
                 possibilities = {left,down,DiagonalLeftDown};
                 // checking across the river if a lion is there
-                
+
                 auto b = state->blackPieces.find(overRiver[0]);
                 if(b!=state->blackPieces.end()){
                     if(b->second == "l"){
                         possibleMoves.push_back(overRiver[0]);
-                     
+
                     }
                 }
-                
+
                 if(straightPath){
                     possibilities.push_back(blackLionPos->second);
                 }
                 // loop through all the possibilities and only add it to possibleMoves if the block is empty or it has a black piece there
                 ValidMoves(possibilities,possibleMoves,state);
             }
-            
+
 
         }
         PrintMoves(possibleMoves,LionPos->second);
@@ -464,8 +466,8 @@ vector<string> LionMoves(State * state){
         }
         // if it is in d then it can move left,right,possibly up,possibly down and diagonally.
         if(column == "d"){
-           
-            // convert rank to int because depending in the rank, certain additional moves will be available 
+
+            // convert rank to int because depending in the rank, certain additional moves will be available
             int Currentrank = stoi(rank);
             string left = "c"+rank;
             string right = "e"+rank;
@@ -497,7 +499,7 @@ vector<string> LionMoves(State * state){
                 }
                 // loop through all the possibilities and only add it to possibleMoves if the block is empty or it has a black piece there
                 ValidMoves(possibilities,possibleMoves,state);
-                
+
             }
             else{
                 // if the rank is 5
@@ -512,12 +514,12 @@ vector<string> LionMoves(State * state){
                     possibilities.push_back(whiteLionPos->second);
                 }
                 // loop through all the possibilities and only add it to possibleMoves if the block is empty or it has a white piece there
-                ValidMoves(possibilities,possibleMoves,state);   
+                ValidMoves(possibilities,possibleMoves,state);
             }
-           
+
         }
         else if( column == "c"){
-             // convert rank to int because depending in the rank, certain additional moves will be available 
+             // convert rank to int because depending in the rank, certain additional moves will be available
             int Currentrank = stoi(rank);
             string right = "d"+rank;
             string up = "";
@@ -559,19 +561,19 @@ vector<string> LionMoves(State * state){
                         possibleMoves.push_back("e3");
                     }
                 }
-                
+
                 if(straightPath){
                     possibilities.push_back(whiteLionPos->second);
                 }
                 // loop through all the possibilities and only add it to possibleMoves if the block is empty or it has a white piece there
                 ValidMoves(possibilities,possibleMoves,state);
-                
+
             }
 
         }
         //column is e
         else{
-            // convert rank to int because depending in the rank, certain additional moves will be available 
+            // convert rank to int because depending in the rank, certain additional moves will be available
             int Currentrank = stoi(rank);
             string left = "d"+rank;
             string up = "";
@@ -607,26 +609,26 @@ vector<string> LionMoves(State * state){
                 DiagonalLeftDown = "d"+newRank;
                 possibilities = {left,down,DiagonalLeftDown};
                 // checking across the river if a lion is there
-                
+
                 auto b = state->blackPieces.find("c3");
                 if(b!=state->blackPieces.end()){
                     if(b->second == "L"){
                         possibleMoves.push_back("c3");
                     }
                 }
-                
+
                 if(straightPath){
                     possibilities.push_back(whiteLionPos->second);
                 }
                 // loop through all the possibilities and only add it to possibleMoves if the block is empty or it has a black piece there
                 ValidMoves(possibilities,possibleMoves,state);
             }
-            
+
         }
-       
+
          PrintMoves(possibleMoves,LionPos->second);
     }
-   
+
     return possibleMoves;
 }
 
@@ -683,7 +685,7 @@ vector<string> ZebraMoves(State * state) {
                     //up up and right
                     move3 = static_cast<char>(column[0]+1) + to_string(Currentrank+2);
                 }
-                
+
                 possibilities = {move1,move2,move3};
             }
             else if(Currentrank==4 || Currentrank ==5 || Currentrank==3){
@@ -704,7 +706,7 @@ vector<string> ZebraMoves(State * state) {
                 string move2 = static_cast<char>(column[0]+1) + to_string(Currentrank+2);
                 possibilities = {move1,move2};
             }
-        
+
         }
         else if( column =="b"){
             if(Currentrank ==7){
@@ -734,7 +736,7 @@ vector<string> ZebraMoves(State * state) {
                     //up up and left
                     move4 = static_cast<char>(column[0]-1) + to_string(Currentrank+2);
                 }
-                
+
                 possibilities = {move1,move2,move3,move4};
             }
             else if(Currentrank==4 || Currentrank ==5 || Currentrank==3){
@@ -764,7 +766,7 @@ vector<string> ZebraMoves(State * state) {
 
         }
         else if(column=="c" || column =="d" || column =="e"){
-            
+
             if(Currentrank ==7){
                 //down down and right
                 string move1 = static_cast<char>(column[0]+1) + to_string(Currentrank-2);
@@ -794,12 +796,12 @@ vector<string> ZebraMoves(State * state) {
                     //down down and left
                     move4 = static_cast<char>(column[0]-1) + to_string(Currentrank-2);
                 }
-            
+
                 //left left and up
                 move5 = static_cast<char>(column[0]-2) + to_string(Currentrank+1);
                 //left left and down
                 move6 = static_cast<char>(column[0]-2) + to_string(Currentrank-1);
-                
+
                 possibilities = {move1,move2,move3,move4,move5,move6};
             }
             else if(Currentrank== 5 || Currentrank==4|| Currentrank==3){
@@ -858,7 +860,7 @@ vector<string> ZebraMoves(State * state) {
                     //up up and left
                     move4 = static_cast<char>(column[0]-1) + to_string(Currentrank+2);
                 }
-                
+
                 possibilities = {move1,move2,move3,move4};
             }
             else if(Currentrank ==5 || Currentrank ==4 || Currentrank ==3){
@@ -935,7 +937,7 @@ vector<string> ZebraMoves(State * state) {
             }
 
         }
-    
+
         ValidMoves(possibilities,possibleMoves,state);
         PrintMoves(possibleMoves,zebraPos->second);
     }
@@ -1028,7 +1030,7 @@ vector<string> ElephantMoves(string currentPosition, State * state, bool& multip
     }
     else if(column == "f" || column == "g"){
          if(Currentrank ==7){
-            // left 
+            // left
             string move1 = static_cast<char>(column[0]-1)+ rank;
             // left left
             string move2 = static_cast<char>(column[0]-2)+ rank;
@@ -1109,7 +1111,7 @@ void ElephantMoves(State * s){
         iter1 = it.first;
         iter2 = it.second;
     }
-    // No elephants 
+    // No elephants
     if(iter1 == iter2){
         return;
     }
@@ -1152,7 +1154,7 @@ vector<string> PawnMoves(string currentPosition, State * state, bool& multiplePa
         if(column != "g"){
             // there is no left diagonal if we are in column a
 
-            // The pawn can only move back one it is past rank 4 
+            // The pawn can only move back one it is past rank 4
             // So the only possible moves are up and diagonal right
             if(Currentrank <=4){
                 // up
@@ -1167,9 +1169,9 @@ vector<string> PawnMoves(string currentPosition, State * state, bool& multiplePa
                 string move1 = column + to_string(Currentrank +1);
                 // diagonal right up
                 string move2 = static_cast<char>(column[0]+1)+ to_string(Currentrank+1);
-                // down 
+                // down
                 string move3 = column + to_string(Currentrank -1 );
-                // down down 
+                // down down
                 string move4 = column + to_string(Currentrank - 2);
 
                 // back move is only valid if there are no pieces in the first back block
@@ -1179,13 +1181,13 @@ vector<string> PawnMoves(string currentPosition, State * state, bool& multiplePa
                 else{
                     possibilities = {move1,move2};
                 }
-                
+
             }
             //rank is 7, then we can only move down
             else{
-                // down 
+                // down
                 string move1 = column + to_string(Currentrank -1 );
-                // down down 
+                // down down
                 string move2 = column + to_string(Currentrank - 2);
                 if(state->boardByPosition.find(move1)->second == "Empty"){
                     possibilities = {move1,move2};
@@ -1193,7 +1195,7 @@ vector<string> PawnMoves(string currentPosition, State * state, bool& multiplePa
             }
 
             if(column != "a" && Currentrank != 7){
-                // the only additional move is a diagonal left 
+                // the only additional move is a diagonal left
                 string leftDiag = static_cast<char>(column[0]-1)+to_string(Currentrank +1);
                 possibilities.push_back(leftDiag);
             }
@@ -1213,9 +1215,9 @@ vector<string> PawnMoves(string currentPosition, State * state, bool& multiplePa
                 string move1 = column + to_string(Currentrank +1);
                 // diagonal left up
                 string move2 = static_cast<char>(column[0]-1)+ to_string(Currentrank+1);
-                // down 
+                // down
                 string move3 = column + to_string(Currentrank -1 );
-                // down down 
+                // down down
                 string move4 = column + to_string(Currentrank - 2);
                 if(state->boardByPosition.find(move3)->second == "Empty"){
                     possibilities = {move1,move2,move3,move4};
@@ -1226,9 +1228,9 @@ vector<string> PawnMoves(string currentPosition, State * state, bool& multiplePa
             }
             //rank is 7, then we can only move down
             else{
-                // down 
+                // down
                 string move1 = column + to_string(Currentrank -1 );
-                // down down 
+                // down down
                 string move2 = column + to_string(Currentrank - 2);
                 if(state->boardByPosition.find(move1)->second == "Empty"){
                     possibilities = {move1,move2};
@@ -1240,7 +1242,7 @@ vector<string> PawnMoves(string currentPosition, State * state, bool& multiplePa
     else{
 
         if(column != "g"){
-            // The pawn can only move back one it is past rank 4 
+            // The pawn can only move back one it is past rank 4
             // So the only possible moves are down and diagonal right down
             if(Currentrank >=4){
                 // down
@@ -1255,9 +1257,9 @@ vector<string> PawnMoves(string currentPosition, State * state, bool& multiplePa
                 string move1 = column + to_string(Currentrank +1);
                 // diagonal right down
                 string move2 = static_cast<char>(column[0]+1)+ to_string(Currentrank-1);
-                // down 
+                // down
                 string move3 = column + to_string(Currentrank -1 );
-                // up up 
+                // up up
                 string move4 = column + to_string(Currentrank + 2);
                 if(state->boardByPosition.find(move1)->second == "Empty"){
                     possibilities = {move1,move2,move3,move4};
@@ -1265,20 +1267,20 @@ vector<string> PawnMoves(string currentPosition, State * state, bool& multiplePa
                 else{
                     possibilities = {move2,move3};
                 }
-                
+
             }
             //rank is 1, then we can only move up
             else{
-                // up 
+                // up
                 string move1 = column + to_string(Currentrank + 1 );
-                // up up 
+                // up up
                 string move2 = column + to_string(Currentrank + 2);
                 if(state->boardByPosition.find(move1)->second == "Empty"){
                     possibilities = {move1,move2};
                 }
             }
             if(column != "a" && Currentrank != 1){
-                // the only additional move is a diagonal left 
+                // the only additional move is a diagonal left
                 string leftDiag = static_cast<char>(column[0]-1)+to_string(Currentrank -1);
                 possibilities.push_back(leftDiag);
             }
@@ -1298,9 +1300,9 @@ vector<string> PawnMoves(string currentPosition, State * state, bool& multiplePa
                 string move1 = column + to_string(Currentrank +1);
                 // diagonal left down
                 string move2 = static_cast<char>(column[0]-1)+ to_string(Currentrank-1);
-                // down 
+                // down
                 string move3 = column + to_string(Currentrank -1 );
-                // up up 
+                // up up
                 string move4 = column + to_string(Currentrank + 2);
                 if(state->boardByPosition.find(move1)->second == "Empty"){
                     possibilities = {move1,move2,move3,move4};
@@ -1312,9 +1314,9 @@ vector<string> PawnMoves(string currentPosition, State * state, bool& multiplePa
             }
             //rank is 7, then we can only move up
             else{
-                // up 
+                // up
                 string move1 = column + to_string(Currentrank +1 );
-                // up up 
+                // up up
                 string move2 = column + to_string(Currentrank + 2);
                 if(state->boardByPosition.find(move1)->second == "Empty"){
                     possibilities = {move1,move2};
@@ -1341,7 +1343,7 @@ void PawnMoves(State * s){
         iter1 = it.first;
         iter2 = it.second;
     }
-    // No pawns 
+    // No pawns
     if(iter1 == iter2){
         return;
     }
@@ -1363,9 +1365,105 @@ void PawnMoves(State * s){
         PawnMoves(initialPositions[i],s,multiplePawns);
     }
 }
-// method that will adjust the state given a move
-void makeMove(State * state,string& move){
+// updating the list where we store the configuration as with the piece as a key
+// Parameters follow the order: board, piece we are going to replace, position of the piece we are replacing, string that will replace old string
+void update_Piece_List(unordered_multimap<string,string>&board,string& piece, string pos,string update){
+    pair<iter,iter> Iterat = board.equal_range(piece);
+    iter it1 = Iterat.first;
+    // loop through and find the corresponding postion to pos
+    while(it1 != Iterat.second){
+        if ( it1->second == pos){
+            // erase the old item and insert the new one
+            board.erase(it1);
+            board.insert({update,pos});
+            break;
+            // return it1;
+        }
+        it1++;
+    }
+}
 
+// method that will adjust the state given a move
+State * makeMove(State * state,string& move){
+    // create the new state which we will adjust according to the move to be made
+    State * newState =  new State(state->boardByPiece,state->boardByPosition,state->whitePieces,state->blackPieces,state->whitesTurn);
+    string CurrentPosition = move.substr(0,2);
+    string moveTo = move.substr(2,3);
+    // find the current position on the board
+    auto it = newState->boardByPosition.find(CurrentPosition);
+    // find the position we are moving t0
+    auto it2 = newState->boardByPosition.find(moveTo);
+
+    //if the position we are moving to is empty
+    if(it2->second == "Empty"){
+        // set the new position equal to the piece in the in the current position
+        it2->second = it->second;
+        // set the value of the current position to empty since we are leaving that block
+        it->second = "Empty";
+        // get an iterator in the map where the pieces are the keys and we need to update that one as well
+        update_Piece_List(newState->boardByPiece,it->second,it2->first,it2->second);
+        update_Piece_List(newState->boardByPiece,it2->second,it->first,it->second);
+        // updating the black and white piece lists
+        if(isupper(it2->second.at(0))){
+            // white piece so update that list
+            auto wp = newState->whitePieces.find(CurrentPosition);
+            // since the block becomes empty we remove it from the list
+            newState->whitePieces.erase(wp);
+            // insert the update position in the white piece list
+            newState->whitePieces.insert({moveTo,it2->second});
+        }
+        else{
+            auto bp = newState->blackPieces.find(CurrentPosition);
+            // since the block becomes empty we remove it from the list
+            newState->blackPieces.erase(bp);
+            // insert the update position in the black piece list
+            newState->blackPieces.insert({moveTo,it2->second});
+        }
+    }
+    // the state we are moving to contains a black piece or white piece
+    else{
+        // set the position moved to same as the current position
+        it2->second = it->second;
+        // set the value of the current position to empty since we are leaving that block
+        it->second = "Empty";
+        // get an iterator in the map where the pieces are the keys and we need to update that one as well
+        update_Piece_List(newState->boardByPiece,it->second,it2->first,it2->second);
+        update_Piece_List(newState->boardByPiece,it2->second,it->first,it->second);
+        // white move
+         if(isupper(it2->second.at(0))){
+            // white piece so update that list
+            auto wp = newState->whitePieces.find(CurrentPosition);
+            // since the block becomes empty we remove it from the list
+            newState->whitePieces.erase(wp);
+            // insert the update position in the white piece list
+            newState->whitePieces.insert({moveTo,it2->second});
+            // since we moved to a position that was occupied by a black piece , we need to remove it from the list
+            auto bp = newState->blackPieces.find(moveTo);
+            newState->blackPieces.erase(bp);
+        }
+        else{
+            auto bp = newState->blackPieces.find(CurrentPosition);
+            // since the block becomes empty we remove it from the list
+            newState->blackPieces.erase(bp);
+            // insert the update position in the white piece list
+            newState->blackPieces.insert({moveTo,it2->second});
+             // since we moved to a position that was occupied by a white piece , we need to remove it from the list
+            auto wp = newState->whitePieces.find(moveTo);
+            newState->whitePieces.erase(wp);
+        }
+
+    }
+    //  for (auto it = newState->boardByPosition.begin();it != newState->boardByPosition.end();it++) {
+    //     cout<< it->first << " "<< it->second<<endl;
+    // }
+    // for (auto it = newState->blackPieces.begin();it != newState->blackPieces.end();it++) {
+    //     cout<< it->first << " "<< it->second<<endl;
+    // }
+
+    // for (auto it = newState->whitePieces.begin();it != newState->whitePieces.end();it++) {
+    //     cout<< it->first << " "<< it->second<<endl;
+    // }
+    return newState;
 }
 // method to convert a state to a string
 string stateToString(State * s){
@@ -1402,7 +1500,7 @@ string stateToString(State * s){
         else{
             answer+= it->second;
         }
-        // if it is a g, we move onto the next rank so add / 
+        // if it is a g, we move onto the next rank so add /
         if(it->first.at(0)=='g'){
             if(i==len -1){
                 continue;
@@ -1410,7 +1508,7 @@ string stateToString(State * s){
             answer+="/";
         }
     }
-    
+    cout<<answer<<endl;
     return answer;
 }
 
@@ -1426,13 +1524,15 @@ int main(){
         inputs.push_back(input);
     }
     setStates(inputs,states);
-    
+
     // PrintPositions(states);
     for(State * state : states){
-        stateToString(state);
+        string m = "c7c3";
+        State * next = makeMove(state,m);
+        stateToString(next);
     }
-    
-  
+
+
 }
 void PrintMoves(vector<string>&moves,string& StartPos, bool& moreThanOne){
     int length = moves.size();
@@ -1447,7 +1547,7 @@ void PrintMoves(vector<string>&moves,string& StartPos, bool& moreThanOne){
         else{
             cout<<StartPos<<moves[i]<<" ";
         }
-       
+
     }
     if(!moreThanOne){
         cout<<"\n";
@@ -1455,7 +1555,7 @@ void PrintMoves(vector<string>&moves,string& StartPos, bool& moreThanOne){
     else{
         cout<<" ";
     }
-        
+
 }
 
 void PrintMoves(vector<string>&moves, string& StartPos){
@@ -1471,13 +1571,13 @@ void PrintMoves(vector<string>&moves, string& StartPos){
         else{
             cout<<StartPos<<moves[i]<<" ";
         }
-       
+
     }
     cout<<"\n";
 }
 
 void PrintPositions(vector<State *>&states){
-    
+
     vector<string>outputs = {"white pawn: ","black pawn: ","white superpawn: ","black superpawn: ","white giraffe: ","black giraffe: ","white monkey: ","black monkey: ","white elephant: ","black elephant: ","white lion: ","black lion: ","white crocodile: ","black crocodile: ","white zebra: ","black zebra: ","side to play: "};
     vector<string>outputs2 = {"white pawn:","black pawn:","white superpawn:","black superpawn:","white giraffe:","black giraffe:","white monkey:","black monkey:","white elephant:","black elephant:","white lion:","black lion:","white crocodile:","black crocodile:","white zebra:","black zebra:","side to play:"};
     vector<string>values = {"P","p","S","s","G","g","M","m","E","e","L","l","C","c","Z","z"};
@@ -1500,7 +1600,7 @@ void PrintPositions(vector<State *>&states){
                 else{
                     cout<<outputs[i]<<turn<<endl;
                 }
-                
+
             }
             else{
                 // get all the positions which corresponds to a certain piece
@@ -1530,11 +1630,11 @@ void PrintPositions(vector<State *>&states){
                     else{
                         cout<<answers[k]<<" ";
                     }
-                   
+
                 }
                 cout<<"\n";
             }
-           
+
         }
         cout<<"\n";
     }
