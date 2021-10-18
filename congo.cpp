@@ -1363,6 +1363,57 @@ void PawnMoves(State * s){
         PawnMoves(initialPositions[i],s,multiplePawns);
     }
 }
+// method that will adjust the state given a move
+void makeMove(State * state,string& move){
+
+}
+// method to convert a state to a string
+string stateToString(State * s){
+    string answer = "";
+    vector<string> positions  = {"a7","b7","c7","d7","e7","f7","g7","a6","b6","c6","d6","e6","f6","g6","a5","b5","c5","d5","e5","f5","g5","a4","b4","c4","d4","e4","f4","g4","a3","b3","c3","d3","e3","f3","g3","a2","b2","c2","d2","e2","f2","g2","a1","b1","c1","d1","e1","f1","g1"};
+    int len = positions.size();
+    for(int i =0;i< len;i++){
+        // find each position in the map
+        auto it = s->boardByPosition.find(positions[i]);
+        // check if the block is empty
+        if(it->second == "Empty"){
+            int l = answer.length();
+            // if there's nothing in the string intially, add one blank space
+            if(l==0){
+                answer += to_string(1);
+            }
+            else{
+                // if the string has other characters, get the last one and check if it is a digit
+                char c =  answer.at(l-1);
+                if(isdigit(c)){
+                    // if it is a digit, increment it since we have two consecutive empty blocks now and add it to the string
+                    string p = "";
+                    p  +=c;
+                    answer.pop_back();
+                    answer+= to_string(stoi(p)+1);
+                }
+                // if it just a piece as the last character , then add one empty block
+                else{
+                    answer+=to_string(1);
+                }
+            }
+        }
+        // if it's not empty, then just add the Piece to the string
+        else{
+            answer+= it->second;
+        }
+        // if it is a g, we move onto the next rank so add / 
+        if(it->first.at(0)=='g'){
+            if(i==len -1){
+                continue;
+            }
+            answer+="/";
+        }
+    }
+    
+    return answer;
+}
+
 int main(){
     vector<string> inputs;
     vector<State *>states;
@@ -1378,7 +1429,7 @@ int main(){
     
     // PrintPositions(states);
     for(State * state : states){
-        PawnMoves(state);
+        stateToString(state);
     }
     
   
