@@ -4,6 +4,9 @@
 #include <algorithm>
 #include <string>
 #include <unordered_map>
+#include <fstream>
+
+
 using namespace std;
 
 
@@ -19,11 +22,14 @@ struct State{
     // bool that will represent which players turn it is
     bool whitesTurn = true;
 
-    State(unordered_multimap<string,string>&state,unordered_multimap<string,string>&state2,unordered_multimap<string,string>&w,unordered_multimap<string,string>&b,bool WhitesTurnToPlay){
+    int moveNumber;
+
+    State(unordered_multimap<string,string>&state,unordered_multimap<string,string>&state2,unordered_multimap<string,string>&w,unordered_multimap<string,string>&b,bool WhitesTurnToPlay,int move){
         boardByPiece = state;
         boardByPosition = state2;
         whitePieces = w;
         blackPieces = b;
+        moveNumber = move;
         whitesTurn = WhitesTurnToPlay;
     }
 
@@ -121,7 +127,7 @@ void StringToState(string state,vector<State*>&states){
         }
     }
     // create a new state and add it to the states vector
-    State * newState = new State(StatesByPiece,StatesByPosition,wPieces,bPieces,whitePlay);
+    State * newState = new State(StatesByPiece,StatesByPosition,wPieces,bPieces,whitePlay,move);
     states.push_back(newState);
 
 
@@ -1382,18 +1388,53 @@ void update_Piece_List(unordered_multimap<string,string>&board,string& piece, st
         it1++;
     }
 }
-
+// This method will return all the pieces corresponding to a players pieces that are in the river before they make any move
+vector<pair<string,string>> get_river_pieces(State * incomingState){
+    string init = "a";
+    unordered_multimap<string,string> PieceList;
+    vector<pair<string,string>> answers;
+    // set piece list depending on which player must move now
+    if(incomingState->whitesTurn){
+        PieceList = incomingState->whitePieces;
+    }
+    else{
+        PieceList = incomingState->blackPieces;
+    }
+    for(int i=0;i<7;i++){
+        // find everything from a4-g4
+        string RiverPos = static_cast<char>(init[0]+i)+to_string(4);
+        auto iterator1 = PieceList.find(RiverPos);
+        if (iterator1 != PieceList.end()){
+            // if there is a piece in the river , add its position to the vector
+            answers.push_back(make_pair(iterator1->first,iterator1->second));
+        }
+    }
+    return answers;
+}
 // method that will adjust the state given a move
 State * makeMove(State * state,string& move){
     // create the new state which we will adjust according to the move to be made
-    State * newState =  new State(state->boardByPiece,state->boardByPosition,state->whitePieces,state->blackPieces,state->whitesTurn);
+    State * newState =  new State(state->boardByPiece,state->boardByPosition,state->whitePieces,state->blackPieces,state->whitesTurn,state->moveNumber);
+    // if the move being made is a white move, then for the new piece it needs to be a black move
+    if(state->whitesTurn){
+        newState->whitesTurn = false;
+    }
+    else{
+        //if this move is a black move then the new state will be a white move
+        newState->whitesTurn = true;
+        // we also increment the number of moves played since an entire round will be completed
+        newState->moveNumber ++;
+    }
+
+    // we need to find any black and white pieces that are in the river before a move is made.
+    // we send the old state since that state tells us who is going to play this move
+    vector<pair<string,string>> PiecesInRiver = get_river_pieces(state);
     string CurrentPosition = move.substr(0,2);
     string moveTo = move.substr(2,3);
     // find the current position on the board
     auto it = newState->boardByPosition.find(CurrentPosition);
     // find the position we are moving t0
     auto it2 = newState->boardByPosition.find(moveTo);
-
     //if the position we are moving to is empty
     if(it2->second == "Empty"){
         // set the new position equal to the piece in the in the current position
@@ -1410,7 +1451,7 @@ State * makeMove(State * state,string& move){
             // since the block becomes empty we remove it from the list
             newState->whitePieces.erase(wp);
             // insert the update position in the white piece list
-            newState->whitePieces.insert({moveTo,it2->second});
+            newState->whitePieces.insert({moveTo,it2->second});      
         }
         else{
             auto bp = newState->blackPieces.find(CurrentPosition);
@@ -1423,11 +1464,13 @@ State * makeMove(State * state,string& move){
     // the state we are moving to contains a black piece or white piece
     else{
         // set the position moved to same as the current position
-        it2->second = it->second;
+        string toBeMoved = it->second;
+        string Replaced = it2->second;
+        it2->second = toBeMoved;
         // set the value of the current position to empty since we are leaving that block
         it->second = "Empty";
         // get an iterator in the map where the pieces are the keys and we need to update that one as well
-        update_Piece_List(newState->boardByPiece,it->second,it2->first,it2->second);
+        update_Piece_List(newState->boardByPiece,Replaced,it2->first,it2->second);
         update_Piece_List(newState->boardByPiece,it2->second,it->first,it->second);
         // white move
          if(isupper(it2->second.at(0))){
@@ -1451,7 +1494,44 @@ State * makeMove(State * state,string& move){
             auto wp = newState->whitePieces.find(moveTo);
             newState->whitePieces.erase(wp);
         }
-
+    //     for (auto it = newState->blackPieces.begin();it != newState->blackPieces.end();it++) {
+    //     cout<< it->first << " "<< it->second<<endl;
+    // }
+    }
+    // there are pieces in the river
+    if(PiecesInRiver.size() != 0){
+        for(auto Piece : PiecesInRiver){
+            // find the piece by its Letter
+            cout<<Piece.second << endl;
+            auto Iter = newState->boardByPiece.equal_range(Piece.second);
+            iter iteratorByPiece = Iter.first;
+            iter tmp = Iter.first;
+            while(iteratorByPiece != Iter.second){
+                if(iteratorByPiece->second.at(1)=='4'){
+                    cout<<iteratorByPiece->second<<endl;
+                    // if the  piece is still in the river , then we remove it from the lists
+                    auto del  = newState->boardByPosition.find(iteratorByPiece->second);
+                    newState->boardByPosition.erase(del);
+                    newState->boardByPosition.insert({iteratorByPiece->second,"Empty"});
+                    if(state->whitesTurn){
+                        auto wp = newState->whitePieces.find(iteratorByPiece->second);
+                        newState->whitePieces.erase(wp);
+                    }
+                    else{
+                        auto bp = newState->blackPieces.find(iteratorByPiece->second);
+                        newState->blackPieces.erase(bp);
+                    }
+                    newState->boardByPiece.insert({"Empty",iteratorByPiece->second});
+                    iteratorByPiece++;
+                    newState->boardByPiece.erase(tmp);
+                }
+                else{
+                    iteratorByPiece++;
+                }
+                tmp = iteratorByPiece;
+            }
+            cout<<"here\n";
+        }
     }
     //  for (auto it = newState->boardByPosition.begin();it != newState->boardByPosition.end();it++) {
     //     cout<< it->first << " "<< it->second<<endl;
@@ -1508,29 +1588,66 @@ string stateToString(State * s){
             answer+="/";
         }
     }
-    cout<<answer<<endl;
+    // cout<<answer<<endl;
+    string player;
+    if(s->whitesTurn){
+        player = "w";
+    }
+    else{
+        player = "b";
+    }
+    answer+= " "+player+" "+to_string(s->moveNumber);
     return answer;
 }
-
+// method to check if a game is over or not given a state
+string isGameOver(State * s){
+    // find white and black lion
+    auto WhiteLion = s->boardByPiece.find("L");
+    auto BlackLion = s->boardByPiece.find("l");
+    // if both are available we can continue
+    if(WhiteLion!=s->boardByPiece.end() && BlackLion!=s->boardByPiece.end()){
+        return "Continue";
+    }
+    // if only white lion is available
+    else if(WhiteLion!=s->boardByPiece.end() && BlackLion==s->boardByPiece.end()){
+        return "White wins";
+    }
+    return "Black wins";
+}
 int main(){
     vector<string> inputs;
+    vector<string> moves;
     vector<State *>states;
     int n;
     cin>>n;
+    int bounds =2*n;
     cin.ignore();
-    for(int i = 0; i < n;i++){
+    for(int i = 1; i < bounds+1;i++){
         string input;
         getline(cin,input);
-        inputs.push_back(input);
+        if(i%2==0){
+            moves.push_back(input);
+        }
+        else{
+            inputs.push_back(input);
+        }
+        
     }
     setStates(inputs,states);
-
+    ofstream myResults("Myresults.txt",ios::app);
     // PrintPositions(states);
-    for(State * state : states){
-        string m = "c7c3";
-        State * next = makeMove(state,m);
-        stateToString(next);
+    int len = states.size();
+    for(int i=0; i< len;i++){
+        State * s  = states[i];
+        string move  = moves[i];
+        State * result = makeMove(s,move);
+        string ans = stateToString(result);
+        cout<<ans<<endl;
+        myResults<<ans<<endl;
+        string winner = isGameOver(result);
+        cout<<winner<<endl;
     }
+    myResults.close();
 
 
 }
