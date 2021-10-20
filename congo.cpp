@@ -1500,37 +1500,46 @@ State * makeMove(State * state,string& move){
     }
     // there are pieces in the river
     if(PiecesInRiver.size() != 0){
+        vector<string> deleted ;
         for(auto Piece : PiecesInRiver){
             // find the piece by its Letter
-            cout<<Piece.second << endl;
             auto Iter = newState->boardByPiece.equal_range(Piece.second);
             iter iteratorByPiece = Iter.first;
             iter tmp = Iter.first;
             while(iteratorByPiece != Iter.second){
+                auto isDel = find(deleted.begin(),deleted.end(),iteratorByPiece->second);
+                if(isDel != deleted.end()){
+                    break;
+                }
                 if(iteratorByPiece->second.at(1)=='4'){
-                    cout<<iteratorByPiece->second<<endl;
-                    // if the  piece is still in the river , then we remove it from the lists
-                    auto del  = newState->boardByPosition.find(iteratorByPiece->second);
-                    newState->boardByPosition.erase(del);
-                    newState->boardByPosition.insert({iteratorByPiece->second,"Empty"});
-                    if(state->whitesTurn){
-                        auto wp = newState->whitePieces.find(iteratorByPiece->second);
-                        newState->whitePieces.erase(wp);
+                    if(moveTo == iteratorByPiece->second && state->boardByPosition.find(iteratorByPiece->second)->second == "Empty"){
+                        iteratorByPiece++;
                     }
                     else{
-                        auto bp = newState->blackPieces.find(iteratorByPiece->second);
-                        newState->blackPieces.erase(bp);
+                        deleted.push_back(iteratorByPiece->second);
+                        // if the  piece is still in the river , then we remove it from the lists
+                        auto del  = newState->boardByPosition.find(iteratorByPiece->second);
+                        newState->boardByPosition.erase(del);
+                        newState->boardByPosition.insert({iteratorByPiece->second,"Empty"});
+                        if(state->whitesTurn){
+                            auto wp = newState->whitePieces.find(iteratorByPiece->second);
+                            newState->whitePieces.erase(wp);
+                        }
+                        else{
+                            auto bp = newState->blackPieces.find(iteratorByPiece->second);
+                            newState->blackPieces.erase(bp);
+                        }
+                        newState->boardByPiece.insert({"Empty",iteratorByPiece->second});
+                        iteratorByPiece++;
+                        newState->boardByPiece.erase(tmp);
                     }
-                    newState->boardByPiece.insert({"Empty",iteratorByPiece->second});
-                    iteratorByPiece++;
-                    newState->boardByPiece.erase(tmp);
                 }
                 else{
                     iteratorByPiece++;
                 }
                 tmp = iteratorByPiece;
             }
-            cout<<"here\n";
+         
         }
     }
     //  for (auto it = newState->boardByPosition.begin();it != newState->boardByPosition.end();it++) {
