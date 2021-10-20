@@ -1494,9 +1494,6 @@ State * makeMove(State * state,string& move){
             auto wp = newState->whitePieces.find(moveTo);
             newState->whitePieces.erase(wp);
         }
-    //     for (auto it = newState->blackPieces.begin();it != newState->blackPieces.end();it++) {
-    //     cout<< it->first << " "<< it->second<<endl;
-    // }
     }
     // there are pieces in the river
     if(PiecesInRiver.size() != 0){
@@ -1512,6 +1509,7 @@ State * makeMove(State * state,string& move){
                     break;
                 }
                 if(iteratorByPiece->second.at(1)=='4'){
+                    // ensure that we are not removing a piece that just moved into the river now
                     if(moveTo == iteratorByPiece->second && state->boardByPosition.find(iteratorByPiece->second)->second == "Empty"){
                         iteratorByPiece++;
                     }
@@ -1542,16 +1540,6 @@ State * makeMove(State * state,string& move){
          
         }
     }
-    //  for (auto it = newState->boardByPosition.begin();it != newState->boardByPosition.end();it++) {
-    //     cout<< it->first << " "<< it->second<<endl;
-    // }
-    // for (auto it = newState->blackPieces.begin();it != newState->blackPieces.end();it++) {
-    //     cout<< it->first << " "<< it->second<<endl;
-    // }
-
-    // for (auto it = newState->whitePieces.begin();it != newState->whitePieces.end();it++) {
-    //     cout<< it->first << " "<< it->second<<endl;
-    // }
     return newState;
 }
 // method to convert a state to a string
