@@ -1102,7 +1102,8 @@ vector<string> ElephantMoves(string currentPosition, State * state, bool& multip
     PrintMoves(possibleMoves,currentPosition,multipleElephants);
     return possibleMoves;
 }
-void ElephantMoves(State * s){
+vector<string> ElephantMoves(State * s){
+    vector<string>eMoves;
     unordered_multimap<string,string> :: iterator iter1,iter2;
     vector<string>initialPositions;
     bool multipleElephants = false;
@@ -1119,7 +1120,7 @@ void ElephantMoves(State * s){
     }
     // No elephants
     if(iter1 == iter2){
-        return;
+        return eMoves;
     }
     // add the positions to the vector
     for(auto it = iter1; it!= iter2;it++){
@@ -1136,8 +1137,15 @@ void ElephantMoves(State * s){
         if(i == length-1){
             multipleElephants = false;
         }
-        ElephantMoves(initialPositions[i],s,multipleElephants);
+        vector<string> e = ElephantMoves(initialPositions[i],s,multipleElephants);
+        if(i==0){
+            eMoves.insert(eMoves.begin(),e.begin(),e.end());
+        }
+        else{
+            eMoves.insert(eMoves.end(),e.begin(),e.end());
+        }
     }
+    return eMoves;
 }
 
 // Get the Pawn moves using this method
@@ -1334,7 +1342,8 @@ vector<string> PawnMoves(string currentPosition, State * state, bool& multiplePa
     PrintMoves(possibleMoves,currentPosition,multiplePawns);
     return possibleMoves;
 }
-void PawnMoves(State * s){
+vector<string> PawnMoves(State * s){
+    vector<string>pMoves;
     unordered_multimap<string,string> :: iterator iter1,iter2;
     vector<string>initialPositions;
     bool multiplePawns = false;
@@ -1351,7 +1360,7 @@ void PawnMoves(State * s){
     }
     // No pawns
     if(iter1 == iter2){
-        return;
+        return pMoves;
     }
     // add the positions to the vector
     for(auto it = iter1; it!= iter2;it++){
@@ -1368,8 +1377,15 @@ void PawnMoves(State * s){
         if(i == length-1){
             multiplePawns = false;
         }
-        PawnMoves(initialPositions[i],s,multiplePawns);
+        vector<string> p = PawnMoves(initialPositions[i],s,multiplePawns);
+        if(i==0){
+            pMoves.insert(pMoves.begin(),p.begin(),p.end());
+        }
+        else{
+            pMoves.insert(pMoves.end(),p.begin(),p.end());
+        }
     }
+    return pMoves;
 }
 // updating the list where we store the configuration as with the piece as a key
 // Parameters follow the order: board, piece we are going to replace, position of the piece we are replacing, string that will replace old string
@@ -1609,65 +1625,182 @@ string isGameOver(State * s){
     else if(WhiteLion!=s->boardByPiece.end() && BlackLion==s->boardByPiece.end()){
         return "White wins";
     }
-    return "Black wins";
+    else{
+        return "Black wins";
+    }
+}
+// Method that will get all the moves for each piece, and merge them into one vector
+vector<string> AllMoves(State * s){
+    vector<string> everyPossibleMove;
+    vector<string> elephant = ElephantMoves(s);
+    vector<string> zebra = ZebraMoves(s);
+    vector<string> pawn = PawnMoves(s);
+    vector<string> lion = LionMoves(s);
+    everyPossibleMove.insert(everyPossibleMove.begin(),lion.begin(),lion.end());
+    everyPossibleMove.insert(everyPossibleMove.end(),elephant.begin(),elephant.end());
+    everyPossibleMove.insert(everyPossibleMove.end(),zebra.begin(),zebra.end());
+    everyPossibleMove.insert(everyPossibleMove.end(),pawn.begin(),pawn.end());
+    return everyPossibleMove;
+}
+
+// Because we will not be able to search to the end of the game (the search tree is too large), we
+// must use an evaluation function. This will allows us to search N moves into the future and
+// evaluate the resulting position. An evaluation function is simply a function that accepts as input
+// a board position, and returns a value that measures how good the position is for whoever it is to
+// play. Importantly, the evaluation function is static — it does not consider moves into the future.
+// There a 4 Cases:
+// 1. If the board contains only a black and white lion and no other pieces, then it is a draw
+// and the raw score is 0.
+// 2. Otherwise, if the black lion is missing, then white has won and the raw score is 10000.
+// 3. Otherwise, if the white lion is missing, then black has won and the raw score is -10000.
+// 4. Otherwise, compute the value of the white pieces on the board.
+// Then, do the same for the black pieces. In both cases, exclude the
+// lions. The raw score is then the total value of white pieces minus the total value of black
+// pieces.
+// Piece Scores are as follows : Pawn : 100 , Elephant : 200 , Zebra : 300
+// If it is whitesTurn to play, multiply raw score by 1 and if it blacks turn, multiply by -1
+int Evaluation(State * state){
+    int rawScore;
+    auto blackLion = state->boardByPiece.find("l");
+    auto whiteLion = state->boardByPiece.find("L");
+    // Checking Case 1: 
+    if(state->blackPieces.size() == 1 && state->whitePieces.size()==1){
+        if(whiteLion!=state->boardByPiece.end() && blackLion!=state->boardByPiece.end()){
+           rawScore = 0;
+           return rawScore;
+        }
+    }
+    // Checking Case 2: 
+    if(whiteLion!=state->boardByPiece.end() && blackLion==state->boardByPiece.end()){
+       rawScore = 10000;
+    }
+    // Checking Case 3: 
+    else if(whiteLion==state->boardByPiece.end() && blackLion!=state->boardByPiece.end()){
+        rawScore = -10000;
+    }
+    // Case 4:
+    else{
+        // loop through white pieces and add relative piece value to white score
+        int whiteScore = 0;
+        for(auto it = state->whitePieces.begin();it!= state->whitePieces.end();it++){
+            if(it->second != "L"){
+                if(it->second == "Z"){
+                    whiteScore+= 300;
+                }
+                else if(it->second == "E"){
+                    whiteScore+= 200;
+                }
+                else{
+                    whiteScore += 100;
+                }
+            }
+        }
+        int blackScore = 0;
+        for(auto it = state->blackPieces.begin();it!= state->blackPieces.end();it++){
+            if(it->second != "l"){
+                if(it->second == "z"){
+                    blackScore+= 300;
+                }
+                else if(it->second == "e"){
+                    blackScore+= 200;
+                }
+                else{
+                    blackScore += 100;
+                }
+            }
+        }
+        rawScore = whiteScore - blackScore;
+    }
+
+    if(!state->whitesTurn){
+        rawScore *= -1;
+    }
+
+    return rawScore;
+
+}
+int MiniMax(State* state, int depth){
+    string outcome = isGameOver(state);
+    if(outcome != "Continue" || depth <=0){
+        return Evaluation(state);
+    }
+    int value = -10000000;
+    vector<string> moves = AllMoves(state);
+    for(string move : moves){
+        State * nextState = makeMove(state,move);
+        int eval = -1 * MiniMax(nextState,depth -1);
+        value = max(value,eval);
+    }
+    return value;
 }
 int main(){
     vector<string> inputs;
-    vector<string> moves;
+    // vector<string> moves;
     vector<State *>states;
     int n;
     cin>>n;
-    int bounds =2*n;
+    // int bounds =2*n;
     cin.ignore();
-    for(int i = 1; i < bounds+1;i++){
+    for(int i = 0; i < n;i++){
         string input;
         getline(cin,input);
-        if(i%2==0){
-            moves.push_back(input);
-        }
-        else{
-            inputs.push_back(input);
-        }
+        inputs.push_back(input);
+        // if(i%2==0){
+        //     moves.push_back(input);
+        // }
+        // else{
+        //     inputs.push_back(input);
+        // }
         
     }
     setStates(inputs,states);
-    ofstream myResults("Myresults.txt",ios::app);
+    // ofstream myResults("Myresults.txt",ios::app);
     // PrintPositions(states);
     int len = states.size();
     for(int i=0; i< len;i++){
         State * s  = states[i];
-        string move  = moves[i];
-        State * result = makeMove(s,move);
-        string ans = stateToString(result);
-        cout<<ans<<endl;
-        myResults<<ans<<endl;
-        string winner = isGameOver(result);
-        cout<<winner<<endl;
+        // PawnMoves(s);
+        int val = MiniMax(s,2);
+        cout<<val<<endl;
+        // int Eval = Evaluation(s);
+        // cout<<Eval<<endl;
+        // string move  = moves[i];
+        // State * result = makeMove(s,move);
+        // string ans = stateToString(result);
+        // cout<<ans<<endl;
+        // myResults<<ans<<endl;
+        // string winner = isGameOver(result);
+        // cout<<winner<<endl;
     }
-    myResults.close();
+    // myResults.close();
 
 
 }
 void PrintMoves(vector<string>&moves,string& StartPos, bool& moreThanOne){
     int length = moves.size();
     if(length == 0){
+        // cout<<"\n";
         return;
     }
     sort(moves.begin(),moves.end());
     for(int i = 0; i < length;i++){
         if(i==length-1){
-            cout<<StartPos<<moves[i];
+            string ans = StartPos+moves[i];
+            // cout<<StartPos<<moves[i];
+            moves[i] = ans;
         }
         else{
-            cout<<StartPos<<moves[i]<<" ";
+            string ans = StartPos+moves[i];
+            // cout<<StartPos<<moves[i]<<" ";
+            moves[i] = ans;
         }
 
     }
     if(!moreThanOne){
-        cout<<"\n";
+        // cout<<"\n";
     }
     else{
-        cout<<" ";
+        // cout<<" ";
     }
 
 }
@@ -1680,14 +1813,18 @@ void PrintMoves(vector<string>&moves, string& StartPos){
     sort(moves.begin(),moves.end());
     for(int i = 0; i < length;i++){
         if(i==length-1){
-            cout<<StartPos<<moves[i];
+            string ans = StartPos+moves[i];
+            // cout<<StartPos<<moves[i];
+            moves[i] = ans;
         }
         else{
-            cout<<StartPos<<moves[i]<<" ";
+            string ans = StartPos+moves[i];
+            // cout<<StartPos<<moves[i]<<" ";
+            moves[i] = ans;
         }
 
     }
-    cout<<"\n";
+    // cout<<"\n";
 }
 
 void PrintPositions(vector<State *>&states){
