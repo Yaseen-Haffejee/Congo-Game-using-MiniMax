@@ -38,7 +38,6 @@ struct State{
 void PrintPositions(vector<State *>&states);
 void PrintMoves(vector<string>&moves, string& StartPos);
 void PrintMoves(vector<string>&moves,string& StartPos, bool& moreThanOne);
-
 void StringToState(string state,vector<State*>&states){
     // unordered multimap so searching is faster and we can have duplicate keys
     unordered_multimap<string,string> StatesByPiece;
@@ -360,8 +359,9 @@ vector<string> LionMoves(State * state){
                 auto b = state->blackPieces.find(overRiver[0]);
                 if(b!=state->blackPieces.end()){
                     if(b->second == "l"){
-                        possibleMoves.push_back(overRiver[0]);
-
+                        auto between = state->boardByPosition.find("d4");
+                        if(between->second == "Empty")
+                            possibleMoves.push_back(overRiver[0]);
                     }
                 }
 
@@ -417,7 +417,9 @@ vector<string> LionMoves(State * state){
                 auto b = state->blackPieces.find(overRiver[0]);
                 if(b!=state->blackPieces.end()){
                     if(b->second == "l"){
-                        possibleMoves.push_back(overRiver[0]);
+                        auto between = state->boardByPosition.find("d4");
+                        if(between->second=="Empty")
+                            possibleMoves.push_back(overRiver[0]);
 
                     }
                 }
@@ -561,10 +563,12 @@ vector<string> LionMoves(State * state){
                 DiagonalRightDown = "d"+newRank;
                 possibilities = {right,down,DiagonalRightDown};
                 // checking across the river if a lion is there
-                auto b = state->blackPieces.find("e3");
-                if(b!=state->blackPieces.end()){
+                auto b = state->whitePieces.find("e3");
+                if(b!=state->whitePieces.end()){
                     if(b->second == "L"){
-                        possibleMoves.push_back("e3");
+                        auto between = state->boardByPosition.find("d4");
+                        if(between->second == "Empty")
+                            possibleMoves.push_back("e3");
                     }
                 }
 
@@ -616,13 +620,13 @@ vector<string> LionMoves(State * state){
                 possibilities = {left,down,DiagonalLeftDown};
                 // checking across the river if a lion is there
 
-                auto b = state->blackPieces.find("c3");
-                if(b!=state->blackPieces.end()){
-                    if(b->second == "L"){
+                auto b = state->boardByPosition.find("c3");
+                if(b->second == "L"){
+                    auto between = state->boardByPosition.find("d4");
+                    if(between->second == "Empty")
                         possibleMoves.push_back("c3");
-                    }
                 }
-
+        
                 if(straightPath){
                     possibilities.push_back(whiteLionPos->second);
                 }
@@ -1389,7 +1393,7 @@ vector<string> PawnMoves(State * s){
 }
 // updating the list where we store the configuration as with the piece as a key
 // Parameters follow the order: board, piece we are going to replace, position of the piece we are replacing, string that will replace old string
-void update_Piece_List(unordered_multimap<string,string>&board,string& piece, string pos,string update){
+void update_Piece_List(unordered_multimap<string,string>&board,string piece, string pos,string update){
     pair<iter,iter> Iterat = board.equal_range(piece);
     iter it1 = Iterat.first;
     // loop through and find the corresponding postion to pos
@@ -1511,49 +1515,44 @@ State * makeMove(State * state,string& move){
             newState->whitePieces.erase(wp);
         }
     }
-    // there are pieces in the river
-    if(PiecesInRiver.size() != 0){
-        vector<string> deleted ;
-        for(auto Piece : PiecesInRiver){
-            // find the piece by its Letter
-            auto Iter = newState->boardByPiece.equal_range(Piece.second);
-            iter iteratorByPiece = Iter.first;
-            iter tmp = Iter.first;
-            while(iteratorByPiece != Iter.second){
-                auto isDel = find(deleted.begin(),deleted.end(),iteratorByPiece->second);
-                if(isDel != deleted.end()){
-                    break;
-                }
-                if(iteratorByPiece->second.at(1)=='4'){
-                    // ensure that we are not removing a piece that just moved into the river now
-                    if(moveTo == iteratorByPiece->second && state->boardByPosition.find(iteratorByPiece->second)->second == "Empty"){
-                        iteratorByPiece++;
-                    }
-                    else{
-                        deleted.push_back(iteratorByPiece->second);
-                        // if the  piece is still in the river , then we remove it from the lists
-                        auto del  = newState->boardByPosition.find(iteratorByPiece->second);
-                        newState->boardByPosition.erase(del);
-                        newState->boardByPosition.insert({iteratorByPiece->second,"Empty"});
-                        if(state->whitesTurn){
-                            auto wp = newState->whitePieces.find(iteratorByPiece->second);
-                            newState->whitePieces.erase(wp);
-                        }
-                        else{
-                            auto bp = newState->blackPieces.find(iteratorByPiece->second);
-                            newState->blackPieces.erase(bp);
-                        }
-                        newState->boardByPiece.insert({"Empty",iteratorByPiece->second});
-                        iteratorByPiece++;
-                        newState->boardByPiece.erase(tmp);
-                    }
+    // check there are pieces in the river
+    if(PiecesInRiver.size()!=0){
+        //loop trough the pices in the river
+        for(int i=0;i<PiecesInRiver.size();i++){
+            auto Piece = PiecesInRiver[i];
+            // get the position of the piece in the previous state before move was made and after move was made in new state
+            auto s1 = state->boardByPosition.find(Piece.first);
+            auto s2 = newState->boardByPosition.find(Piece.first);
+            //pieces need to drown since they are in the same position from state to state
+            if(s1->second == s2->second){
+                newState->boardByPosition.erase(newState->boardByPosition.find(Piece.first));
+                newState->boardByPosition.insert({Piece.first,"Empty"});
+                if(state->whitesTurn){
+                    auto wp = newState->whitePieces.find(Piece.first);
+                    newState->whitePieces.erase(wp);
                 }
                 else{
-                    iteratorByPiece++;
+                    auto bp = newState->blackPieces.find(Piece.first);
+                    newState->blackPieces.erase(bp);
                 }
-                tmp = iteratorByPiece;
+                update_Piece_List(newState->boardByPiece,Piece.second,Piece.first,"Empty");
             }
-         
+            else{
+                // check if the piece moved in the river and if so, remove it
+                if(moveTo.at(1) == CurrentPosition.at(1)){
+                    newState->boardByPosition.erase(newState->boardByPosition.find(Piece.first));
+                    newState->boardByPosition.insert({Piece.first,"Empty"});
+                    if(state->whitesTurn){
+                        auto wp = newState->whitePieces.find(moveTo);
+                        newState->whitePieces.erase(wp);
+                    }
+                    else{
+                        auto bp = newState->blackPieces.find(moveTo);
+                        newState->blackPieces.erase(bp);
+                    }
+                    update_Piece_List(newState->boardByPiece,Piece.second,Piece.first,"Empty");
+                }
+            }
         }
     }
     return newState;
@@ -1622,10 +1621,10 @@ string isGameOver(State * s){
         return "Continue";
     }
     // if only white lion is available
-    else if(WhiteLion!=s->boardByPiece.end() && BlackLion==s->boardByPiece.end()){
+    if(WhiteLion!=s->boardByPiece.end() && BlackLion==s->boardByPiece.end()){
         return "White wins";
     }
-    else{
+    if(WhiteLion==s->boardByPiece.end() && BlackLion!=s->boardByPiece.end()){
         return "Black wins";
     }
 }
@@ -1724,55 +1723,34 @@ int MiniMax(State* state, int depth){
     if(outcome != "Continue" || depth <=0){
         return Evaluation(state);
     }
-    int value = -10000000;
+    int value = -100000000;
     vector<string> moves = AllMoves(state);
     for(string move : moves){
         State * nextState = makeMove(state,move);
         int eval = -1 * MiniMax(nextState,depth -1);
+        // cout<<eval<<endl;
         value = max(value,eval);
     }
     return value;
 }
 int main(){
     vector<string> inputs;
-    // vector<string> moves;
     vector<State *>states;
     int n;
     cin>>n;
-    // int bounds =2*n;
     cin.ignore();
     for(int i = 0; i < n;i++){
         string input;
         getline(cin,input);
         inputs.push_back(input);
-        // if(i%2==0){
-        //     moves.push_back(input);
-        // }
-        // else{
-        //     inputs.push_back(input);
-        // }
-        
     }
     setStates(inputs,states);
-    // ofstream myResults("Myresults.txt",ios::app);
-    // PrintPositions(states);
     int len = states.size();
     for(int i=0; i< len;i++){
         State * s  = states[i];
-        // PawnMoves(s);
         int val = MiniMax(s,2);
         cout<<val<<endl;
-        // int Eval = Evaluation(s);
-        // cout<<Eval<<endl;
-        // string move  = moves[i];
-        // State * result = makeMove(s,move);
-        // string ans = stateToString(result);
-        // cout<<ans<<endl;
-        // myResults<<ans<<endl;
-        // string winner = isGameOver(result);
-        // cout<<winner<<endl;
     }
-    // myResults.close();
 
 
 }
