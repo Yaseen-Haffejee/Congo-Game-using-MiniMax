@@ -1,0 +1,65 @@
+\documentclass[twocolumn]{article}
+\usepackage[margin=0.75in]{geometry}
+\usepackage{charter}
+\usepackage{array,multirow,graphicx}
+\usepackage{float}
+\usepackage{xfrac}
+
+\title{COMS3005A Report: Congo}
+\author{Names and student numbers here}
+\date{November 2021}
+
+\begin{document}
+
+\maketitle
+
+\section{Methods}
+
+For each algorithm being tested, describe exactly what was done and what changes or modifications you made. If you are working individually, you may have only two algorithms: minimax with the simple evaluation function, and alpha-beta pruning with the more complex one. In that case, describe how these worked briefly, but if you made any additional changes and are excited to share them here, please do.
+
+For those working in groups, please describe the further two modifications that were made on top of alpha-beta pruning and the advanced evaluation function. Describe all four cases. If you implemented more and would like to share, please do. 
+For example:
+
+\subsection{Alpha-Beta Pruning}
+
+Briefly describe how this works here
+
+\subsection{Advanced evaluation function}
+
+Briefly describe how this works here
+
+\subsection{Modification 3 (only necessary for groups)}
+
+Describe your modification here. Try be as precise as possible. How does it work? Did you have to do any non-standard thing when implementing? What advantages do you think the modification brings to your AI?
+
+\subsection{Modification 4 (only necessary for groups)}
+
+Describe your modification here. Try be as precise as possible. How does it work? Did you have to do anything non-standard when implementing? What advantages do you think the modification brings to your AI?
+
+\section{Results}
+
+Present your results here. If you have two agents (because you're working individually) compare the two agents directly by playing two games from the starting position (with each agent taking a turn to be black and white).
+Otherwise, you may have three agents (or more): the minimax agent, the alpha-beta pruning agent, and the agent with all modifications implemented. Compare these agents in a round-robin tournament, where each agent plays the others twice (once as white and once as black). 
+
+The kind of game you should play depends on how you have implemented everything. If your AI can search to a fixed depth only, then you should select a depth (greater than 1) for each agent such that they take roughly the same amount of time to return a move (e.g minimax to depth 2 and alpha-beta to depth 4). However, if your agent's are always able to return a move after a fixed amount of time (e.g. you're using iterative deepening), then play your games with fixed time controls (e.g. each agent is allowed X seconds per move). Report the results similarly to the tables below, where 1 -- 0 indicates a win for white, 0 -- 1 a win for black, and $\sfrac{1}{2}$ -- $\sfrac{1}{2}$ is a draw.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+                       &                     & \multicolumn{3}{c|}{Black}                                           \\ \hline
+                       &                     & \textbf{Minimax} & \textbf{Alpha-Beta}           & \textbf{My Agent} \\ \hline
+\parbox[t]{2mm}{\multirow{3}{*}{\rotatebox[origin=c]{90}{White}}} & \textbf{Minimax}    & --                & $\sfrac{1}{2}$ -- $\sfrac{1}{2}$ & 0 -- 1               \\ \cline{2-5} 
+                       & \textbf{Alpha-Beta} & 1 -- 0              & --                             & 0 -- 1               \\ \cline{2-5} 
+                       & \textbf{My Agent}   & 1 --0              & 1 -- 0                           & --                 \\ \hline
+\end{tabular}
+\caption{Results for tournament with e.g. 30 second time controls}
+\end{table}
+
+
+\section{Optional Additional Information}
+
+If there is anything else you wish to include, please do so here.
+
+\end{document}
+

@@ -5,7 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include <fstream>
-
+#include <limits.h>
 
 using namespace std;
 
@@ -38,6 +38,7 @@ struct State{
 void PrintPositions(vector<State *>&states);
 void PrintMoves(vector<string>&moves, string& StartPos);
 void PrintMoves(vector<string>&moves,string& StartPos, bool& moreThanOne);
+string stateToString(State * s);
 void StringToState(string state,vector<State*>&states){
     // unordered multimap so searching is faster and we can have duplicate keys
     unordered_multimap<string,string> StatesByPiece;
@@ -1445,7 +1446,8 @@ State * makeMove(State * state,string& move){
         // we also increment the number of moves played since an entire round will be completed
         newState->moveNumber ++;
     }
-
+    // string statein = stateToString(state);
+    // cout<<statein<<" "<<move<<endl;
     // we need to find any black and white pieces that are in the river before a move is made.
     // we send the old state since that state tells us who is going to play this move
     vector<pair<string,string>> PiecesInRiver = get_river_pieces(state);
@@ -1468,17 +1470,21 @@ State * makeMove(State * state,string& move){
         if(isupper(it2->second.at(0))){
             // white piece so update that list
             auto wp = newState->whitePieces.find(CurrentPosition);
-            // since the block becomes empty we remove it from the list
-            newState->whitePieces.erase(wp);
-            // insert the update position in the white piece list
-            newState->whitePieces.insert({moveTo,it2->second});      
+            if(wp != newState->whitePieces.end()){
+                // since the block becomes empty we remove it from the list
+                newState->whitePieces.erase(wp);
+                // insert the update position in the white piece list
+                newState->whitePieces.insert({moveTo,it2->second}); 
+            }     
         }
         else{
             auto bp = newState->blackPieces.find(CurrentPosition);
             // since the block becomes empty we remove it from the list
-            newState->blackPieces.erase(bp);
-            // insert the update position in the black piece list
-            newState->blackPieces.insert({moveTo,it2->second});
+            if(bp != newState->blackPieces.end()){
+                newState->blackPieces.erase(bp);
+                // insert the update position in the black piece list
+                newState->blackPieces.insert({moveTo,it2->second});
+            }
         }
     }
     // the state we are moving to contains a black piece or white piece
@@ -1496,23 +1502,29 @@ State * makeMove(State * state,string& move){
          if(isupper(it2->second.at(0))){
             // white piece so update that list
             auto wp = newState->whitePieces.find(CurrentPosition);
-            // since the block becomes empty we remove it from the list
-            newState->whitePieces.erase(wp);
-            // insert the update position in the white piece list
-            newState->whitePieces.insert({moveTo,it2->second});
-            // since we moved to a position that was occupied by a black piece , we need to remove it from the list
-            auto bp = newState->blackPieces.find(moveTo);
-            newState->blackPieces.erase(bp);
+            if(wp != newState->whitePieces.end()){
+                // since the block becomes empty we remove it from the list
+                newState->whitePieces.erase(wp);
+                // insert the update position in the white piece list
+                newState->whitePieces.insert({moveTo,it2->second});
+                // since we moved to a position that was occupied by a black piece , we need to remove it from the list
+                auto bp = newState->blackPieces.find(moveTo);
+                newState->blackPieces.erase(bp);
+            }
         }
         else{
             auto bp = newState->blackPieces.find(CurrentPosition);
-            // since the block becomes empty we remove it from the list
-            newState->blackPieces.erase(bp);
-            // insert the update position in the white piece list
-            newState->blackPieces.insert({moveTo,it2->second});
-             // since we moved to a position that was occupied by a white piece , we need to remove it from the list
-            auto wp = newState->whitePieces.find(moveTo);
-            newState->whitePieces.erase(wp);
+            if(bp != newState->blackPieces.end()){
+                // since the block becomes empty we remove it from the list
+                newState->blackPieces.erase(bp);
+                // insert the update position in the white piece list
+                newState->blackPieces.insert({moveTo,it2->second});
+            
+                // since we moved to a position that was occupied by a white piece , we need to remove it from the list
+                auto wp = newState->whitePieces.find(moveTo);
+                newState->whitePieces.erase(wp);
+            }
+            
         }
     }
     // check there are pieces in the river
@@ -1539,8 +1551,10 @@ State * makeMove(State * state,string& move){
             }
             else{
                 // check if the piece moved in the river and if so, remove it
-                if(moveTo.at(1) == CurrentPosition.at(1)){
-                    newState->boardByPosition.erase(newState->boardByPosition.find(Piece.first));
+                if(moveTo.at(1) == '4' && CurrentPosition.at(1) == '4'){
+                    auto posi = newState->boardByPosition.find(Piece.first);
+                    // cout<<posi->first <<" "<<posi->second <<endl;
+                    newState->boardByPosition.erase(posi);
                     newState->boardByPosition.insert({Piece.first,"Empty"});
                     if(state->whitesTurn){
                         auto wp = newState->whitePieces.find(moveTo);
@@ -1555,6 +1569,7 @@ State * makeMove(State * state,string& move){
             }
         }
     }
+    // cout<<"completed\n";
     return newState;
 }
 // method to convert a state to a string
@@ -1639,7 +1654,34 @@ vector<string> AllMoves(State * s){
     everyPossibleMove.insert(everyPossibleMove.end(),elephant.begin(),elephant.end());
     everyPossibleMove.insert(everyPossibleMove.end(),zebra.begin(),zebra.end());
     everyPossibleMove.insert(everyPossibleMove.end(),pawn.begin(),pawn.end());
-    return everyPossibleMove;
+    vector<string> PrioritisedMoves;
+    vector<string> lowPriority;
+    if(s->whitesTurn){
+        for(string m : everyPossibleMove){
+            string movePos = m.substr(2,3);
+            auto it = s->blackPieces.find(movePos);
+            if(it!= s->blackPieces.end()){
+                PrioritisedMoves.push_back(m);
+            }
+            else{
+                lowPriority.push_back(m);
+            }
+        }
+    }
+    else{
+        for(string m : everyPossibleMove){
+            string movePos = m.substr(2,3);
+            auto it = s->whitePieces.find(movePos);
+            if(it!= s->whitePieces.end()){
+                PrioritisedMoves.push_back(m);
+            }
+            else{
+                lowPriority.push_back(m);
+            }
+        }
+    }
+    PrioritisedMoves.insert(PrioritisedMoves.end(),lowPriority.begin(),lowPriority.end());
+    return PrioritisedMoves;
 }
 
 // Because we will not be able to search to the end of the game (the search tree is too large), we
@@ -1718,6 +1760,140 @@ int Evaluation(State * state){
     return rawScore;
 
 }
+// Material Score is the same as the else statement used in Evaluation. i.e number of pieces multiplied by their socre added up
+int MaterialScore(State * state){
+    // loop through white pieces and add relative piece value to white score
+    int whiteScore = 0;
+    for(auto it = state->whitePieces.begin();it!= state->whitePieces.end();it++){
+        if(it->second != "L"){
+            if(it->second == "Z"){
+                whiteScore+= 300;
+            }
+            else if(it->second == "E"){
+                whiteScore+= 200;
+            }
+            else{
+                whiteScore += 100;
+            }
+        }
+    }
+    int blackScore = 0;
+    for(auto it = state->blackPieces.begin();it!= state->blackPieces.end();it++){
+        if(it->second != "l"){
+            if(it->second == "z"){
+                blackScore+= 300;
+            }
+            else if(it->second == "e"){
+                blackScore+= 200;
+            }
+            else{
+                blackScore += 100;
+            }
+        }
+    }
+    return whiteScore-blackScore;
+}
+
+// Given a position, the mobility score is the number of moves each side is able to play. Imagine
+// we are given a position with white to play. The mobility score for white is simply the number
+// of moves it has available. To calculate the score for black, “pretend” it is black to play instead,
+// and calculate how many moves they would have available. Compute the delta by taking white’s
+// score and subtracting black’s.
+int MobilityScore(State * state){
+    // store the states actual turn
+    bool actualTurn = state->whitesTurn;
+    // set the turn to white and get all the possible moves
+    state->whitesTurn = true;
+    vector<string> whiteMoves =  AllMoves(state);
+    // set the state to black and get all the possible moves
+    state->whitesTurn = false;
+    vector<string> blackMoves = AllMoves(state);
+    // reset the states turn to what it was originally
+    state->whitesTurn = actualTurn;
+
+    int mscore = whiteMoves.size() - blackMoves.size();
+    return mscore;
+}
+
+// Given a position, the attack score is the number of opposite pieces that a player is threatening
+// to capture. Imagine we are given a position with white to play. The attack score for white is
+// simply the number of moves whose target square contains a black piece. In addition, for each
+// move whose target square contains the black lion, add 10 to the score. To calculate the score
+// for black, “pretend” it is black to play instead, and then follow the exact same rules to compute
+// their attack score. Compute the delta by taking white’s score and subtracting black’s.
+int AttackScore(State * state){
+    bool actualTurn = state->whitesTurn;
+    // set the turn to white and get all the possible moves
+    state->whitesTurn = true;
+    vector<string> whiteMoves =  AllMoves(state);
+    // set the state to black and get all the possible moves
+    state->whitesTurn = false;
+    vector<string> blackMoves = AllMoves(state);
+    // reset the states turn to what it was originally
+    state->whitesTurn = actualTurn;
+
+    // now we need to loop through each move and check which one has an opposing piece ready to attack
+    int whiteAttack = 0;
+    for(string move : whiteMoves){
+        string toMove = move.substr(2,3);
+        auto it = state->blackPieces.find(toMove);
+        if(it != state->blackPieces.end()){
+            if(it->second == "l"){
+                whiteAttack += 11;
+            }
+            else{
+                whiteAttack += 1;
+            }
+        }
+    }
+    int blackAttack = 0;
+    for(string move : blackMoves){
+        string toMove = move.substr(2,3);
+        auto it = state->whitePieces.find(toMove);
+        if(it != state->whitePieces.end()){
+            if(it->second == "L"){
+                blackAttack += 11;
+            }
+            else{
+                blackAttack += 1;
+            }
+        }
+    }
+    return whiteAttack - blackAttack;
+}
+// Implementing the advanced evaluation function which minimax with alpha beta pruning will use
+int AdvancedEvaluation(State* state){
+    int rawScore;
+    auto blackLion = state->boardByPiece.find("l");
+    auto whiteLion = state->boardByPiece.find("L");
+    // Checking Case 1: 
+    if(state->blackPieces.size() == 1 && state->whitePieces.size()==1){
+        if(whiteLion!=state->boardByPiece.end() && blackLion!=state->boardByPiece.end()){
+           rawScore = 0;
+           return rawScore;
+        }
+    }
+    // Checking Case 2: 
+    if(whiteLion!=state->boardByPiece.end() && blackLion==state->boardByPiece.end()){
+       rawScore = 10000;
+    }
+    // Checking Case 3: 
+    else if(whiteLion==state->boardByPiece.end() && blackLion!=state->boardByPiece.end()){
+        rawScore = -10000;
+    }
+    // Case 4: Calculate material mobility and attack scores
+    else{
+        int deltaMaterial = MaterialScore(state);
+        int deltaMobility = MobilityScore(state);
+        int deltaAttack = AttackScore(state);
+        rawScore = deltaMaterial + deltaMobility + deltaAttack;
+    }
+    if(!state->whitesTurn){
+        rawScore *= -1;
+    }
+    return rawScore;
+}
+// Normal MiniMax function
 int MiniMax(State* state, int depth){
     string outcome = isGameOver(state);
     if(outcome != "Continue" || depth <=0){
@@ -1728,10 +1904,28 @@ int MiniMax(State* state, int depth){
     for(string move : moves){
         State * nextState = makeMove(state,move);
         int eval = -1 * MiniMax(nextState,depth -1);
-        // cout<<eval<<endl;
         value = max(value,eval);
     }
     return value;
+}
+// Minimax with Alpha Beta pruning
+int MiniMaxAlphaBeta(State* state, int depth, int alpha, int beta){
+    string outcome = isGameOver(state);
+    if(outcome != "Continue" || depth <=0){
+        return AdvancedEvaluation(state);
+    }
+    vector<string> possiblemoves = AllMoves(state);
+    for(string move : possiblemoves){
+        State * nextState = makeMove(state,move);
+        int eval = -1 * MiniMaxAlphaBeta(nextState,depth -1,-beta, -alpha);
+        if( eval >= beta){
+            return beta;
+        }
+        if(eval > alpha){
+            alpha = eval;
+        }
+    }
+    return alpha;
 }
 int main(){
     vector<string> inputs;
@@ -1748,7 +1942,9 @@ int main(){
     int len = states.size();
     for(int i=0; i< len;i++){
         State * s  = states[i];
-        int val = MiniMax(s,2);
+        
+        int val = MiniMaxAlphaBeta(s,4,-100000,100000);
+        // int val = AdvancedEvaluation(s);
         cout<<val<<endl;
     }
 
