@@ -5,7 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include <fstream>
-#include <limits.h>
+#include <map>
 
 using namespace std;
 
@@ -1137,7 +1137,7 @@ vector<string> ElephantMoves(State * s){
         multipleElephants = true;
     }
     // sort the vector so we have alphabetical order
-    sort(initialPositions.begin(),initialPositions.end());
+    // sort(initialPositions.begin(),initialPositions.end());
     for(int i=0;i<length;i++){
         if(i == length-1){
             multipleElephants = false;
@@ -1377,7 +1377,7 @@ vector<string> PawnMoves(State * s){
         multiplePawns = true;
     }
     // sort the vector so we have alphabetical order
-    sort(initialPositions.begin(),initialPositions.end());
+    // sort(initialPositions.begin(),initialPositions.end());
     for(int i=0;i<length;i++){
         if(i == length-1){
             multiplePawns = false;
@@ -1410,16 +1410,16 @@ void update_Piece_List(unordered_multimap<string,string>&board,string piece, str
     }
 }
 // This method will return all the pieces corresponding to a players pieces that are in the river before they make any move
-vector<pair<string,string>> get_river_pieces(State * incomingState){
+vector<pair<string,string>> get_river_pieces(State &incomingState){
     string init = "a";
     unordered_multimap<string,string> PieceList;
     vector<pair<string,string>> answers;
     // set piece list depending on which player must move now
-    if(incomingState->whitesTurn){
-        PieceList = incomingState->whitePieces;
+    if(incomingState.whitesTurn){
+        PieceList = incomingState.whitePieces;
     }
     else{
-        PieceList = incomingState->blackPieces;
+        PieceList = incomingState.blackPieces;
     }
     for(int i=0;i<7;i++){
         // find everything from a4-g4
@@ -1433,30 +1433,28 @@ vector<pair<string,string>> get_river_pieces(State * incomingState){
     return answers;
 }
 // method that will adjust the state given a move
-State * makeMove(State * state,string& move){
+State makeMove(State state,string& move){
     // create the new state which we will adjust according to the move to be made
-    State * newState =  new State(state->boardByPiece,state->boardByPosition,state->whitePieces,state->blackPieces,state->whitesTurn,state->moveNumber);
+    State newState =  State(state.boardByPiece,state.boardByPosition,state.whitePieces,state.blackPieces,state.whitesTurn,state.moveNumber);
     // if the move being made is a white move, then for the new piece it needs to be a black move
-    if(state->whitesTurn){
-        newState->whitesTurn = false;
+    if(state.whitesTurn){
+        newState.whitesTurn = false;
     }
     else{
         //if this move is a black move then the new state will be a white move
-        newState->whitesTurn = true;
+        newState.whitesTurn = true;
         // we also increment the number of moves played since an entire round will be completed
-        newState->moveNumber ++;
+        newState.moveNumber ++;
     }
-    // string statein = stateToString(state);
-    // cout<<statein<<" "<<move<<endl;
     // we need to find any black and white pieces that are in the river before a move is made.
     // we send the old state since that state tells us who is going to play this move
     vector<pair<string,string>> PiecesInRiver = get_river_pieces(state);
     string CurrentPosition = move.substr(0,2);
     string moveTo = move.substr(2,3);
     // find the current position on the board
-    auto it = newState->boardByPosition.find(CurrentPosition);
+    auto it = newState.boardByPosition.find(CurrentPosition);
     // find the position we are moving t0
-    auto it2 = newState->boardByPosition.find(moveTo);
+    auto it2 = newState.boardByPosition.find(moveTo);
     //if the position we are moving to is empty
     if(it2->second == "Empty"){
         // set the new position equal to the piece in the in the current position
@@ -1464,26 +1462,26 @@ State * makeMove(State * state,string& move){
         // set the value of the current position to empty since we are leaving that block
         it->second = "Empty";
         // get an iterator in the map where the pieces are the keys and we need to update that one as well
-        update_Piece_List(newState->boardByPiece,it->second,it2->first,it2->second);
-        update_Piece_List(newState->boardByPiece,it2->second,it->first,it->second);
+        update_Piece_List(newState.boardByPiece,it->second,it2->first,it2->second);
+        update_Piece_List(newState.boardByPiece,it2->second,it->first,it->second);
         // updating the black and white piece lists
         if(isupper(it2->second.at(0))){
             // white piece so update that list
-            auto wp = newState->whitePieces.find(CurrentPosition);
-            if(wp != newState->whitePieces.end()){
+            auto wp = newState.whitePieces.find(CurrentPosition);
+            if(wp != newState.whitePieces.end()){
                 // since the block becomes empty we remove it from the list
-                newState->whitePieces.erase(wp);
+                newState.whitePieces.erase(wp);
                 // insert the update position in the white piece list
-                newState->whitePieces.insert({moveTo,it2->second}); 
+                newState.whitePieces.insert({moveTo,it2->second}); 
             }     
         }
         else{
-            auto bp = newState->blackPieces.find(CurrentPosition);
+            auto bp = newState.blackPieces.find(CurrentPosition);
             // since the block becomes empty we remove it from the list
-            if(bp != newState->blackPieces.end()){
-                newState->blackPieces.erase(bp);
+            if(bp != newState.blackPieces.end()){
+                newState.blackPieces.erase(bp);
                 // insert the update position in the black piece list
-                newState->blackPieces.insert({moveTo,it2->second});
+                newState.blackPieces.insert({moveTo,it2->second});
             }
         }
     }
@@ -1496,33 +1494,33 @@ State * makeMove(State * state,string& move){
         // set the value of the current position to empty since we are leaving that block
         it->second = "Empty";
         // get an iterator in the map where the pieces are the keys and we need to update that one as well
-        update_Piece_List(newState->boardByPiece,Replaced,it2->first,it2->second);
-        update_Piece_List(newState->boardByPiece,it2->second,it->first,it->second);
+        update_Piece_List(newState.boardByPiece,Replaced,it2->first,it2->second);
+        update_Piece_List(newState.boardByPiece,it2->second,it->first,it->second);
         // white move
          if(isupper(it2->second.at(0))){
             // white piece so update that list
-            auto wp = newState->whitePieces.find(CurrentPosition);
-            if(wp != newState->whitePieces.end()){
+            auto wp = newState.whitePieces.find(CurrentPosition);
+            if(wp != newState.whitePieces.end()){
                 // since the block becomes empty we remove it from the list
-                newState->whitePieces.erase(wp);
+                newState.whitePieces.erase(wp);
                 // insert the update position in the white piece list
-                newState->whitePieces.insert({moveTo,it2->second});
+                newState.whitePieces.insert({moveTo,it2->second});
                 // since we moved to a position that was occupied by a black piece , we need to remove it from the list
-                auto bp = newState->blackPieces.find(moveTo);
-                newState->blackPieces.erase(bp);
+                auto bp = newState.blackPieces.find(moveTo);
+                newState.blackPieces.erase(bp);
             }
         }
         else{
-            auto bp = newState->blackPieces.find(CurrentPosition);
-            if(bp != newState->blackPieces.end()){
+            auto bp = newState.blackPieces.find(CurrentPosition);
+            if(bp != newState.blackPieces.end()){
                 // since the block becomes empty we remove it from the list
-                newState->blackPieces.erase(bp);
+                newState.blackPieces.erase(bp);
                 // insert the update position in the white piece list
-                newState->blackPieces.insert({moveTo,it2->second});
+                newState.blackPieces.insert({moveTo,it2->second});
             
                 // since we moved to a position that was occupied by a white piece , we need to remove it from the list
-                auto wp = newState->whitePieces.find(moveTo);
-                newState->whitePieces.erase(wp);
+                auto wp = newState.whitePieces.find(moveTo);
+                newState.whitePieces.erase(wp);
             }
             
         }
@@ -1533,43 +1531,41 @@ State * makeMove(State * state,string& move){
         for(int i=0;i<PiecesInRiver.size();i++){
             auto Piece = PiecesInRiver[i];
             // get the position of the piece in the previous state before move was made and after move was made in new state
-            auto s1 = state->boardByPosition.find(Piece.first);
-            auto s2 = newState->boardByPosition.find(Piece.first);
+            auto s1 = state.boardByPosition.find(Piece.first);
+            auto s2 = newState.boardByPosition.find(Piece.first);
             //pieces need to drown since they are in the same position from state to state
             if(s1->second == s2->second){
-                newState->boardByPosition.erase(newState->boardByPosition.find(Piece.first));
-                newState->boardByPosition.insert({Piece.first,"Empty"});
-                if(state->whitesTurn){
-                    auto wp = newState->whitePieces.find(Piece.first);
-                    newState->whitePieces.erase(wp);
+                newState.boardByPosition.erase(newState.boardByPosition.find(Piece.first));
+                newState.boardByPosition.insert({Piece.first,"Empty"});
+                if(state.whitesTurn){
+                    auto wp = newState.whitePieces.find(Piece.first);
+                    newState.whitePieces.erase(wp);
                 }
                 else{
-                    auto bp = newState->blackPieces.find(Piece.first);
-                    newState->blackPieces.erase(bp);
+                    auto bp = newState.blackPieces.find(Piece.first);
+                    newState.blackPieces.erase(bp);
                 }
-                update_Piece_List(newState->boardByPiece,Piece.second,Piece.first,"Empty");
+                update_Piece_List(newState.boardByPiece,Piece.second,Piece.first,"Empty");
             }
             else{
                 // check if the piece moved in the river and if so, remove it
                 if(moveTo.at(1) == '4' && CurrentPosition.at(1) == '4'){
-                    auto posi = newState->boardByPosition.find(Piece.first);
-                    // cout<<posi->first <<" "<<posi->second <<endl;
-                    newState->boardByPosition.erase(posi);
-                    newState->boardByPosition.insert({Piece.first,"Empty"});
-                    if(state->whitesTurn){
-                        auto wp = newState->whitePieces.find(moveTo);
-                        newState->whitePieces.erase(wp);
+                    auto posi = newState.boardByPosition.find(Piece.first);
+                    newState.boardByPosition.erase(posi);
+                    newState.boardByPosition.insert({Piece.first,"Empty"});
+                    if(state.whitesTurn){
+                        auto wp = newState.whitePieces.find(moveTo);
+                        newState.whitePieces.erase(wp);
                     }
                     else{
-                        auto bp = newState->blackPieces.find(moveTo);
-                        newState->blackPieces.erase(bp);
+                        auto bp = newState.blackPieces.find(moveTo);
+                        newState.blackPieces.erase(bp);
                     }
-                    update_Piece_List(newState->boardByPiece,Piece.second,Piece.first,"Empty");
+                    update_Piece_List(newState.boardByPiece,Piece.second,Piece.first,"Empty");
                 }
             }
         }
     }
-    // cout<<"completed\n";
     return newState;
 }
 // method to convert a state to a string
@@ -1654,6 +1650,8 @@ vector<string> AllMoves(State * s){
     everyPossibleMove.insert(everyPossibleMove.end(),elephant.begin(),elephant.end());
     everyPossibleMove.insert(everyPossibleMove.end(),zebra.begin(),zebra.end());
     everyPossibleMove.insert(everyPossibleMove.end(),pawn.begin(),pawn.end());
+
+    // We prioritse the moves that are going to capture an opposing piece
     vector<string> PrioritisedMoves;
     vector<string> lowPriority;
     if(s->whitesTurn){
@@ -1680,6 +1678,7 @@ vector<string> AllMoves(State * s){
             }
         }
     }
+    // merge priority moves and ones moving into empty space
     PrioritisedMoves.insert(PrioritisedMoves.end(),lowPriority.begin(),lowPriority.end());
     return PrioritisedMoves;
 }
@@ -1893,40 +1892,245 @@ int AdvancedEvaluation(State* state){
     }
     return rawScore;
 }
-// Normal MiniMax function
-int MiniMax(State* state, int depth){
-    string outcome = isGameOver(state);
+//Normal MiniMax
+int MiniMax(State &state, int depth,string &bestMove,bool first){
+    string outcome = isGameOver(&state);
     if(outcome != "Continue" || depth <=0){
-        return Evaluation(state);
+        int ans = Evaluation(&state);
+        return ans;
     }
     int value = -100000000;
-    vector<string> moves = AllMoves(state);
+    vector<string> moves = AllMoves(&state);
     for(string move : moves){
-        State * nextState = makeMove(state,move);
-        int eval = -1 * MiniMax(nextState,depth -1);
-        value = max(value,eval);
+        State nextState = makeMove(state,move);
+        int eval = -1 * MiniMax(nextState,depth -1,bestMove,false);
+        if(eval > value){
+            value = eval;
+            if(first){
+                bestMove = move;
+            }
+        }
     }
     return value;
 }
-// Minimax with Alpha Beta pruning
-int MiniMaxAlphaBeta(State* state, int depth, int alpha, int beta){
-    string outcome = isGameOver(state);
+// Normal MiniMax with ALpha-Beta pruning
+int MiniMaxAlphaBeta(State &state, int depth, int alpha, int beta,string &BestMove,bool first){
+    string outcome = isGameOver(&state);
     if(outcome != "Continue" || depth <=0){
-        return AdvancedEvaluation(state);
+        return AdvancedEvaluation(&state);
     }
-    vector<string> possiblemoves = AllMoves(state);
+    vector<string> possiblemoves = AllMoves(&state);
     for(string move : possiblemoves){
-        State * nextState = makeMove(state,move);
-        int eval = -1 * MiniMaxAlphaBeta(nextState,depth -1,-beta, -alpha);
+        State nextState = makeMove(state,move);
+        int eval = -1 * MiniMaxAlphaBeta(nextState,depth -1,-beta, -alpha,BestMove,false);
         if( eval >= beta){
             return beta;
         }
         if(eval > alpha){
             alpha = eval;
+            if(first){
+                BestMove = move;
+            }
         }
     }
     return alpha;
 }
+// Normal MiniMax function with threefold repetition
+int MiniMax(State &state, int depth,string &bestMove,bool first,map<string,int>&whiteMoves,map<string,int>&blackMoves){
+    string outcome = isGameOver(&state);
+    if(outcome != "Continue" || depth <=0){
+        int ans = Evaluation(&state);
+        return ans;
+    }
+    int value = -100000000;
+    vector<string> moves = AllMoves(&state);
+    if(state.whitesTurn){
+        for(auto it = whiteMoves.begin();it!=whiteMoves.end();it++){
+            if(it->second >=2){
+                auto f = find(moves.begin(),moves.end(),it->first);
+                if(f!=moves.end()){
+                    moves.erase(f);
+                }
+            }
+            
+        }
+    }
+    else{
+        for(auto it = blackMoves.begin();it!=blackMoves.end();it++){
+            if(it->second >=2){
+                auto f = find(moves.begin(),moves.end(),it->first);
+                if(f!=moves.end()){
+                    moves.erase(f);
+                }
+            }
+            
+        }
+
+    }
+    
+    for(string move : moves){
+        State nextState = makeMove(state,move);
+        int eval = -1 * MiniMax(nextState,depth -1,bestMove,false,whiteMoves,blackMoves);
+        if(eval > value){
+            value = eval;
+            if(first){
+                bestMove = move;
+            }
+        }
+    }
+    return value;
+}
+// Minimax with Alpha Beta pruning with threefold repitition
+int MiniMaxAlphaBeta(State &state, int depth, int alpha, int beta,string &BestMove,bool first,map<string,int>&whiteMoves,map<string,int>&blackMoves){
+    string outcome = isGameOver(&state);
+    if(outcome != "Continue" || depth <=0){
+        return AdvancedEvaluation(&state);
+    }
+    vector<string> possiblemoves = AllMoves(&state);
+    if(state.whitesTurn){
+        for(auto it = whiteMoves.begin();it!=whiteMoves.end();it++){
+            if(it->second >=2){
+                auto f = find(possiblemoves.begin(),possiblemoves.end(),it->first);
+                if(f!=possiblemoves.end()){
+                    possiblemoves.erase(f);
+                }
+            }
+            
+        }
+    }
+    else{
+        for(auto it = blackMoves.begin();it!=blackMoves.end();it++){
+            if(it->second >=2){
+                auto f = find(possiblemoves.begin(),possiblemoves.end(),it->first);
+                if(f!=possiblemoves.end()){
+                    possiblemoves.erase(f);
+                }
+            }
+            
+        }
+
+    }
+    for(string move : possiblemoves){
+        State nextState = makeMove(state,move);
+        int eval = -1 * MiniMaxAlphaBeta(nextState,depth -1,-beta, -alpha,BestMove,false,whiteMoves,blackMoves);
+        if( eval >= beta){
+            return beta;
+        }
+        if(eval > alpha){
+            alpha = eval;
+            if(first){
+                BestMove = move;
+            }
+        }
+    }
+    return alpha;
+}
+// In this game , the white pieces will use the general Minimax and the black pieces will use the MiniMaxAlphaBeta and threefold repetition is implemented if bool three is true
+string playGame(State state, bool three){
+    int TotalMoves = 0;
+    State next = state;
+    map<string,int>whiteMoves;
+    map<string,int>blackMoves;
+    while( TotalMoves < 100){
+        string moveToPlay;
+        // white will play
+        if(next.whitesTurn){
+            if(three){
+                int val = MiniMax(next,2,moveToPlay,true,whiteMoves,blackMoves);
+                auto w = whiteMoves.find(moveToPlay);
+                if(w == whiteMoves.end()){
+                    whiteMoves.insert({moveToPlay,1});
+                }
+                else{
+                    w->second ++;
+                }
+            }
+            else{
+                MiniMax(next,2,moveToPlay,true);
+            }
+        }
+        else{
+            if(three){
+                int val = MiniMaxAlphaBeta(next,4,-100000,100000,moveToPlay,true,whiteMoves,blackMoves);
+                auto b = blackMoves.find(moveToPlay);
+                if(b == blackMoves.end()){
+                    blackMoves.insert({moveToPlay,1});
+                }
+                else{
+                    b->second ++;
+                }
+            }
+            else{
+                MiniMaxAlphaBeta(next,4,-100000,100000,moveToPlay,true);
+            }
+            TotalMoves ++;
+        }
+        // I do not have to swap moves or anything since all of this is already done in makeMove
+        // SO after makeMove returns, updated will be the resultant state and it will be the other sides turn
+        State updated = makeMove(next,moveToPlay);
+        // isGameOver will return "Black wins", "White wins" or "Continue" if both lions are still on the board
+        string result = isGameOver(&updated);
+        if(result != "Continue"){
+            return result;
+        }
+        next = updated;
+    }
+    return "Draw";
+} 
+// In this game , the black pieces will use the general Minimax and the white pieces will use the MiniMaxAlphaBeta  and threefold repetition is implemented if bool three is true.
+string playGame2(State state, bool three){
+    int TotalMoves = 0;
+    State next = state;
+    map<string,int>whiteMoves;
+    map<string,int>blackMoves;
+    while( TotalMoves < 100){
+        string moveToPlay;
+        // white will play
+        if(next.whitesTurn){
+            if(three){
+                int val = MiniMaxAlphaBeta(next,4,-100000,100000,moveToPlay,true,whiteMoves,blackMoves);
+                auto w = whiteMoves.find(moveToPlay);
+                if(w == whiteMoves.end()){
+                    whiteMoves.insert({moveToPlay,1});
+                }
+                else{
+                    w->second ++;
+                }
+            }
+            else{
+                MiniMaxAlphaBeta(next,4,-100000,100000,moveToPlay,true);
+            }
+        }
+        else{
+            if(three){
+                int val = MiniMax(next,2,moveToPlay,true,whiteMoves,blackMoves);
+                auto b = blackMoves.find(moveToPlay);
+                if(b == blackMoves.end()){
+                    blackMoves.insert({moveToPlay,1});
+                }
+                else{
+                    b->second ++;
+                }
+            }
+            else{
+                MiniMax(next,2,moveToPlay,true);
+            }
+
+            TotalMoves ++;
+        }
+        // I do not have to swap moves or anything since all of this is already done in makeMove
+        // SO after makeMove returns, updated will be the resultant state and it will be the other sides turn
+        State updated = makeMove(next,moveToPlay);
+        // isGameOver will return "Black wins", "White wins" or "Continue" if both lions are still on the board
+        string result = isGameOver(&updated);
+        if(result != "Continue"){
+            return result;
+        }
+        next = updated;
+    }
+    return "Draw";
+} 
+
 int main(){
     vector<string> inputs;
     vector<State *>states;
@@ -1940,14 +2144,18 @@ int main(){
     }
     setStates(inputs,states);
     int len = states.size();
-    for(int i=0; i< len;i++){
-        State * s  = states[i];
-        
-        int val = MiniMaxAlphaBeta(s,4,-100000,100000);
-        // int val = AdvancedEvaluation(s);
-        cout<<val<<endl;
-    }
+    //play the game with white as MiniMax and Black as Alpha-Beta without threefold repetition
+    // string winner = playGame(*states[0],false);
 
+    //play the game with white as MiniMax and Black as Alpha-Beta with threefold repetition
+    // string winner = playGame(*states[0],true);
+
+    // play the game with white as Alpha-Beta and black as Minimax without threefold repetition
+    // string winner = playGame2(*states[0],false);
+
+    // play the game with white as Alpha-Beta and black as MiniMax with threefold repetition
+    string winner = playGame2(*states[0],true);
+    cout<<winner<<endl;
 
 }
 void PrintMoves(vector<string>&moves,string& StartPos, bool& moreThanOne){
@@ -1956,7 +2164,7 @@ void PrintMoves(vector<string>&moves,string& StartPos, bool& moreThanOne){
         // cout<<"\n";
         return;
     }
-    sort(moves.begin(),moves.end());
+    // sort(moves.begin(),moves.end());
     for(int i = 0; i < length;i++){
         if(i==length-1){
             string ans = StartPos+moves[i];
@@ -1984,7 +2192,7 @@ void PrintMoves(vector<string>&moves, string& StartPos){
     if(length == 0){
         return;
     }
-    sort(moves.begin(),moves.end());
+    // sort(moves.begin(),moves.end());
     for(int i = 0; i < length;i++){
         if(i==length-1){
             string ans = StartPos+moves[i];
@@ -2044,7 +2252,7 @@ void PrintPositions(vector<State *>&states){
                     answers.push_back(iter->second);
                 }
                 // sort the vector so they are in alphabetical order
-                sort(answers.begin(),answers.end());
+                // sort(answers.begin(),answers.end());
 
                 //loop through the vector and print out the positions
                 for(int k=0;k<answers.size();k++){
